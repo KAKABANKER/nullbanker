@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Painel — NULLBANKER</title>
+<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <aside class="admin-side">
+    <div class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</div>
+    <nav>
+      <a href="#" data-tab="dashboard" class="active">Dashboard</a>
+      <a href="#" data-tab="orders">Pedidos</a>
+      <a href="#" data-tab="visits">Visitantes</a>
+      <a href="#" data-tab="webhooks">Webhooks</a>
+      <a href="#" data-tab="products">Produtos</a>
+      <a href="#" data-tab="users">Usuários</a>
+      <a href="#" data-tab="settings">Configurações</a>
+      <a href="/">Voltar ao site</a>
+      <a href="#" id="logoutBtn">Sair</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topline">
+      <div>
+        <div class="eyebrow-num" id="adminGreeting">painel administrativo</div>
+        <h2 id="tabTitle">Dashboard</h2>
+      </div>
+    </div>
+
+    <div id="tab-dashboard" class="tab-panel">
+      <div class="stat-grid">
+        <div class="stat-cell"><div class="label">RECEITA (pago)</div><div class="value" id="statRevenue">—</div></div>
+        <div class="stat-cell"><div class="label">PEDIDOS</div><div class="value" id="statOrders">—</div></div>
+        <div class="stat-cell"><div class="label">VISITANTES (30d)</div><div class="value" id="statVisits">—</div></div>
+        <div class="stat-cell"><div class="label">PRODUTOS</div><div class="value" id="statProducts">—</div></div>
+      </div>
+      <h3>Últimos pedidos</h3>
+      <div id="dashboardOrders"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-orders" class="tab-panel" style="display:none;">
+      <div class="tabs" id="orderFilterTabs">
+        <button data-status="" class="active">Todos</button>
+        <button data-status="paid">Pagos</button>
+        <button data-status="pending">Pendentes</button>
+        <button data-status="failed">Falhos</button>
+      </div>
+      <div id="ordersTableWrap"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-visits" class="tab-panel" style="display:none;">
+      <div id="visitsTableWrap"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-webhooks" class="tab-panel" style="display:none;">
+      <p class="helper" style="margin-top:0;">Eventos brutos recebidos das gateways de pagamento (Stripe e Mercado Pago).</p>
+      <div id="webhooksTableWrap"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-products" class="tab-panel" style="display:none;">
+      <button class="btn btn-primary" id="newProductBtn" style="margin-bottom:24px;">+ Novo produto</button>
+      <div id="productForm" style="display:none;margin-bottom:32px;" class="ledger">
+        <div class="ledger-head"><span id="productFormTitle">Novo produto</span><span></span></div>
+        <div style="padding:20px;">
+          <input type="hidden" id="pId" />
+          <input type="hidden" id="pImageUrl" />
+          <div class="field">
+            <label>Imagem de capa (aparece na listagem de produtos)</label>
+            <div class="image-upload-box" id="imageUploadBox">
+              <span class="placeholder-text">Clique para escolher uma imagem (JPG, PNG ou WEBP — até 5MB)</span>
+            </div>
+            <input type="file" id="pImageFile" accept="image/*" style="display:none;" />
+          </div>
+          <div class="field"><label>Nome</label><input type="text" id="pName" /></div>
+          <div class="field"><label>Descrição curta</label><input type="text" id="pShortDesc" /></div>
+          <div class="field"><label>Descrição completa</label><textarea id="pDescription" rows="4"></textarea></div>
+          <div class="field"><label>Preço (R$)</label><input type="text" id="pPrice" /></div>
+          <div class="field">
+            <label>Galeria de fotos (aparece em slide na página do produto)</label>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <button type="button" class="btn btn-outline" id="addGalleryImageBtn" style="margin-top:10px;">+ Adicionar foto à galeria</button>
+            <input type="file" id="pGalleryFile" accept="image/*" style="display:none;" />
+          </div>
+          <div class="field"><label>Características (uma por linha)</label><textarea id="pFeatures" rows="4"></textarea></div>
+          <div style="display:flex;gap:12px;">
+            <button class="btn btn-primary" id="saveProductBtn">Salvar</button>
+            <button class="btn btn-outline" id="cancelProductBtn" type="button">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div id="productsTableWrap"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-users" class="tab-panel" style="display:none;">
+      <div id="usersTableWrap"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-settings" class="tab-panel" style="display:none;">
+      <div class="ledger" style="max-width:600px;">
+        <div class="ledger-head"><span>CONFIGURAÇÕES DO SITE</span><span></span></div>
+        <div style="padding:20px;">
+          <div class="field">
+            <label>Link do Discord (suporte)</label>
+            <input type="text" id="cfgDiscord" placeholder="https://discord.gg/..." />
+          </div>
+          <div class="field">
+            <label>Link do WhatsApp (suporte)</label>
+            <input type="text" id="cfgWhatsapp" placeholder="https://wa.me/55..." />
+          </div>
+          <div class="field">
+            <label>E-mail de contato</label>
+            <input type="email" id="cfgEmail" placeholder="contato@nullbanker.com" />
+          </div>
+          <div class="field">
+            <label>Aviso no topo do site (opcional)</label>
+            <textarea id="cfgAnnouncement" rows="2" placeholder="Ex: Promoção de lançamento — 10% off até domingo."></textarea>
+          </div>
+          <div class="msg success" id="settingsSuccess" style="display:none;">Configurações salvas.</div>
+          <button class="btn btn-primary" id="saveSettingsBtn">Salvar configurações</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="userOrdersModal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <span id="userOrdersTitle">Pedidos do cliente</span>
+          <button id="closeUserOrdersModal" class="btn btn-outline">Fechar</button>
+        </div>
+        <div id="userOrdersBody"><div class="empty-state">carregando...</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="admin-login" id="adminLoginGate">
+  <div class="eyebrow-num center-text">acesso restrito</div>
+  <h2 class="center-text">Painel administrativo</h2>
+  <div class="auth-box mt-40">
+    <div class="msg error" id="adminLoginError"></div>
+    <form id="adminLoginForm">
+      <div class="field"><label>E-mail</label><input type="email" id="adminEmail" required /></div>
+      <div class="field"><label>Senha</label><input type="password" id="adminPassword" required /></div>
+      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  const statusLabels = { paid: "pago", pending: "pendente", failed: "falhou", cancelled: "cancelado", refunded: "reembolsado" };
+
+  function badge(status) {
+    return `<span class="badge ${status}">${statusLabels[status] || status}</span>`;
+  }
+
+  async function checkAccess() {
+    const user = API.user();
+    if (!user || !user.isAdmin || !API.token()) {
+      document.getElementById("adminLoginGate").style.display = "block";
+      document.getElementById("adminShell").style.display = "none";
+      return false;
+    }
+    document.getElementById("adminLoginGate").style.display = "none";
+    document.getElementById("adminShell").style.display = "grid";
+    document.getElementById("adminGreeting").textContent = `logado como ${user.name}`;
+    return true;
+  }
+
+  document.getElementById("adminLoginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById("adminLoginError");
+    errorBox.textContent = "";
+    errorBox.classList.remove("error");
+    try {
+      const data = await API.post("/auth/login", {
+        email: document.getElementById("adminEmail").value.trim(),
+        password: document.getElementById("adminPassword").value,
+      });
+      if (!data.user.isAdmin) {
+        errorBox.textContent = "Esta conta não tem acesso ao painel administrativo.";
+        errorBox.classList.add("error");
+        return;
+      }
+      API.setToken(data.token);
+      API.setUser(data.user);
+      window.location.reload();
+    } catch (err) {
+      errorBox.textContent = err.message || "Não foi possível entrar.";
+      errorBox.classList.add("error");
+    }
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    API.logout();
+  });
+
+  // ---------- Tabs ----------
+  const tabs = document.querySelectorAll("[data-tab]");
+  const titles = {
+    dashboard: "Dashboard", orders: "Pedidos", visits: "Visitantes",
+    webhooks: "Webhooks", products: "Produtos", users: "Usuários", settings: "Configurações",
+  };
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", (e) => {
+      e.preventDefault();
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      const name = tab.dataset.tab;
+      document.querySelectorAll(".tab-panel").forEach((p) => (p.style.display = "none"));
+      document.getElementById(`tab-${name}`).style.display = "block";
+      document.getElementById("tabTitle").textContent = titles[name];
+      loadTab(name);
+    });
+  });
+
+  function loadTab(name) {
+    if (name === "dashboard") loadDashboard();
+    if (name === "orders") loadOrders();
+    if (name === "visits") loadVisits();
+    if (name === "webhooks") loadWebhooks();
+    if (name === "products") loadProducts();
+    if (name === "users") loadUsers();
+    if (name === "settings") loadSettings();
+  }
+
+  // ---------- Dashboard ----------
+  async function loadDashboard() {
+    try {
+      const stats = await API.get("/admin/stats");
+      document.getElementById("statRevenue").textContent = formatBRL(stats.revenue);
+      document.getElementById("statOrders").textContent = `${stats.paidOrders}/${stats.totalOrders}`;
+      document.getElementById("statVisits").textContent = stats.recentVisits;
+      document.getElementById("statProducts").textContent = stats.totalProducts;
+
+      const { orders } = await API.get("/admin/orders");
+      const recent = orders.slice(0, 8);
+      document.getElementById("dashboardOrders").innerHTML = recent.length
+        ? renderOrdersTable(recent)
+        : `<div class="empty-state">Nenhum pedido ainda.</div>`;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderOrdersTable(orders) {
+    return `
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Data</th></tr></thead>
+        <tbody>
+          ${orders
+            .map(
+              (o) => `
+            <tr>
+              <td>${o.id}</td>
+              <td>${o.customerName}<br /><span class="helper" style="margin:0;">${o.customerEmail}</span></td>
+              <td>${o.product ? o.product.name : "—"}</td>
+              <td>${formatBRL(o.amount)}</td>
+              <td>${o.paymentMethod === "pix" ? "Pix" : "Cartão"}</td>
+              <td>
+                <select data-order-id="${o.id}" class="statusSelect">
+                  ${["pending", "paid", "failed", "cancelled", "refunded"]
+                    .map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${statusLabels[s]}</option>`)
+                    .join("")}
+                </select>
+              </td>
+              <td>${formatDate(o.createdAt)}</td>
+            </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function bindStatusSelects(container) {
+    container.querySelectorAll(".statusSelect").forEach((sel) => {
+      sel.addEventListener("change", async () => {
+        try {
+          await API.put(`/admin/orders/${sel.dataset.orderId}`, { status: sel.value });
+        } catch (e) {
+          alert("Não foi possível atualizar o status.");
+        }
+      });
+    });
+  }
+
+  // ---------- Orders tab ----------
+  let currentOrderFilter = "";
+  async function loadOrders() {
+    const wrap = document.getElementById("ordersTableWrap");
+    try {
+      const query = currentOrderFilter ? `?status=${currentOrderFilter}` : "";
+      const { orders } = await API.get(`/admin/orders${query}`);
+      wrap.innerHTML = orders.length ? renderOrdersTable(orders) : `<div class="empty-state">Nenhum pedido encontrado.</div>`;
+      bindStatusSelects(wrap);
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os pedidos.</div>`;
+    }
+  }
+
+  document.querySelectorAll("#orderFilterTabs button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#orderFilterTabs button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentOrderFilter = btn.dataset.status;
+      loadOrders();
+    });
+  });
+
+  // ---------- Visits tab ----------
+  async function loadVisits() {
+    const wrap = document.getElementById("visitsTableWrap");
+    try {
+      const { visits } = await API.get("/admin/visits");
+      wrap.innerHTML = visits.length
+        ? `<table class="admin-table"><thead><tr><th>Página</th><th>IP</th><th>Navegador</th><th>Data</th></tr></thead>
+           <tbody>${visits
+             .map((v) => `<tr><td>${v.path}</td><td>${v.ip || "—"}</td><td>${(v.userAgent || "—").slice(0, 60)}</td><td>${formatDate(v.createdAt)}</td></tr>`)
+             .join("")}</tbody></table>`
+        : `<div class="empty-state">Nenhuma visita registrada ainda.</div>`;
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar as visitas.</div>`;
+    }
+  }
+
+  // ---------- Webhooks tab ----------
+  async function loadWebhooks() {
+    const wrap = document.getElementById("webhooksTableWrap");
+    try {
+      const { webhooks } = await API.get("/admin/webhooks");
+      wrap.innerHTML = webhooks.length
+        ? `<table class="admin-table"><thead><tr><th>Gateway</th><th>Evento</th><th>Data</th><th>Payload</th></tr></thead>
+           <tbody>${webhooks
+             .map(
+               (w) => `<tr><td>${w.gateway}</td><td>${w.eventType || "—"}</td><td>${formatDate(w.createdAt)}</td>
+               <td><pre class="json-view">${JSON.stringify(w.payload, null, 2)}</pre></td></tr>`
+             )
+             .join("")}</tbody></table>`
+        : `<div class="empty-state">Nenhum webhook recebido ainda.</div>`;
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os webhooks.</div>`;
+    }
+  }
+
+  // ---------- Products tab ----------
+  async function loadProducts() {
+    const wrap = document.getElementById("productsTableWrap");
+    try {
+      const { products } = await API.get("/products");
+      wrap.innerHTML = products.length
+        ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Ativo</th><th></th></tr></thead>
+           <tbody>${products
+             .map(
+               (p) => `<tr>
+                <td>${p.imageUrl ? `<img src="${p.imageUrl}" class="thumb-sm" alt="${p.name}" />` : `<span class="helper" style="margin:0;">sem imagem</span>`}</td>
+                <td>${p.name}</td>
+                <td>${formatBRL(p.price)}</td>
+                <td>${p.active ? "Sim" : "Não"}</td>
+                <td>
+                  <button class="btn btn-outline editProductBtn" data-id="${p.id}">Editar</button>
+                  <button class="btn btn-outline deleteProductBtn" data-id="${p.id}">Excluir</button>
+                </td>
+              </tr>`
+             )
+             .join("")}</tbody></table>`
+        : `<div class="empty-state">Nenhum produto cadastrado.</div>`;
+
+      wrap.querySelectorAll(".editProductBtn").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          const product = products.find((p) => p.id === Number(btn.dataset.id));
+          openProductForm(product);
+        })
+      );
+      wrap.querySelectorAll(".deleteProductBtn").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          if (!confirm("Excluir este produto?")) return;
+          await API.del(`/products/${btn.dataset.id}`);
+          loadProducts();
+        })
+      );
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os produtos.</div>`;
+    }
+  }
+
+  let galleryImages = [];
+
+  function renderGallery() {
+    const grid = document.getElementById("galleryGrid");
+    grid.innerHTML = galleryImages
+      .map(
+        (url, i) => `
+        <div class="gallery-thumb">
+          <img src="${url}" alt="Foto ${i + 1}" />
+          <button type="button" class="gallery-remove" data-i="${i}">×</button>
+        </div>`
+      )
+      .join("");
+    grid.querySelectorAll(".gallery-remove").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        galleryImages.splice(Number(btn.dataset.i), 1);
+        renderGallery();
+      });
+    });
+  }
+
+  document.getElementById("addGalleryImageBtn").addEventListener("click", () => {
+    document.getElementById("pGalleryFile").click();
+  });
+
+  document.getElementById("pGalleryFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const btn = document.getElementById("addGalleryImageBtn");
+    const originalText = btn.textContent;
+    btn.textContent = "Enviando...";
+    btn.disabled = true;
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/products/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${API.token()}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Falha no upload.");
+      galleryImages.push(data.url);
+      renderGallery();
+    } catch (err) {
+      alert(err.message || "Não foi possível enviar a imagem.");
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  function setImagePreview(url) {
+    const box = document.getElementById("imageUploadBox");
+    document.getElementById("pImageUrl").value = url || "";
+    if (url) {
+      box.classList.add("has-image");
+      box.innerHTML = `<img src="${url}" alt="Preview" />`;
+    } else {
+      box.classList.remove("has-image");
+      box.innerHTML = `<span class="placeholder-text">Clique para escolher uma imagem (JPG, PNG ou WEBP — até 5MB)</span>`;
+    }
+  }
+
+  document.getElementById("imageUploadBox").addEventListener("click", () => {
+    document.getElementById("pImageFile").click();
+  });
+
+  document.getElementById("pImageFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const box = document.getElementById("imageUploadBox");
+    box.innerHTML = `<span class="placeholder-text">enviando imagem...</span>`;
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/products/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${API.token()}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Falha no upload.");
+      setImagePreview(data.url);
+    } catch (err) {
+      alert(err.message || "Não foi possível enviar a imagem.");
+      setImagePreview(document.getElementById("pImageUrl").value);
+    }
+  });
+
+  function openProductForm(product) {
+    document.getElementById("productForm").style.display = "block";
+    document.getElementById("productFormTitle").textContent = product ? "Editar produto" : "Novo produto";
+    document.getElementById("pId").value = product ? product.id : "";
+    document.getElementById("pName").value = product ? product.name : "";
+    document.getElementById("pShortDesc").value = product ? product.shortDesc : "";
+    document.getElementById("pDescription").value = product ? product.description : "";
+    document.getElementById("pPrice").value = product ? product.price : "";
+    document.getElementById("pFeatures").value = product ? (product.features || []).join("\n") : "";
+    setImagePreview(product ? product.imageUrl : "");
+    galleryImages = product ? [...(product.images || [])] : [];
+    renderGallery();
+  }
+
+  document.getElementById("newProductBtn").addEventListener("click", () => openProductForm(null));
+  document.getElementById("cancelProductBtn").addEventListener("click", () => {
+    document.getElementById("productForm").style.display = "none";
+    document.getElementById("pImageFile").value = "";
+  });
+
+  document.getElementById("saveProductBtn").addEventListener("click", async () => {
+    const id = document.getElementById("pId").value;
+    const payload = {
+      name: document.getElementById("pName").value.trim(),
+      shortDesc: document.getElementById("pShortDesc").value.trim(),
+      description: document.getElementById("pDescription").value.trim(),
+      price: Number(document.getElementById("pPrice").value),
+      imageUrl: document.getElementById("pImageUrl").value || null,
+      images: galleryImages,
+      features: document.getElementById("pFeatures").value.split("\n").map((f) => f.trim()).filter(Boolean),
+    };
+    try {
+      if (id) await API.put(`/products/${id}`, payload);
+      else await API.post("/products", payload);
+      document.getElementById("productForm").style.display = "none";
+      loadProducts();
+    } catch (e) {
+      alert(e.message || "Não foi possível salvar o produto.");
+    }
+  });
+
+  // ---------- Users tab ----------
+  async function loadUsers() {
+    const wrap = document.getElementById("usersTableWrap");
+    try {
+      const { users } = await API.get("/admin/users");
+      wrap.innerHTML = users.length
+        ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Admin</th><th>Pedidos</th><th>Desde</th><th></th></tr></thead>
+           <tbody>${users
+             .map(
+               (u) => `<tr>
+                <td>${u.name}</td>
+                <td>${u.email}</td>
+                <td>${u.phone || "—"}</td>
+                <td>${u.isAdmin ? "Sim" : "Não"}</td>
+                <td>${u._count ? u._count.orders : 0}</td>
+                <td>${formatDate(u.createdAt)}</td>
+                <td><button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${u.name}">Ver pedidos</button></td>
+              </tr>`
+             )
+             .join("")}</tbody></table>`
+        : `<div class="empty-state">Nenhum usuário cadastrado.</div>`;
+
+      wrap.querySelectorAll(".viewUserOrdersBtn").forEach((btn) =>
+        btn.addEventListener("click", () => openUserOrdersModal(btn.dataset.id, btn.dataset.name))
+      );
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os usuários.</div>`;
+    }
+  }
+
+  // ---------- User orders modal ----------
+  async function openUserOrdersModal(userId, userName) {
+    document.getElementById("userOrdersModal").classList.add("open");
+    document.getElementById("userOrdersTitle").textContent = `Pedidos de ${userName}`;
+    const body = document.getElementById("userOrdersBody");
+    body.innerHTML = `<div class="empty-state">carregando...</div>`;
+    try {
+      const { orders } = await API.get(`/admin/users/${userId}/orders`);
+      body.innerHTML = orders.length
+        ? renderOrdersTable(orders)
+        : `<div class="empty-state">Este cliente ainda não fez nenhum pedido.</div>`;
+      bindStatusSelects(body);
+    } catch (e) {
+      body.innerHTML = `<div class="empty-state">Não foi possível carregar os pedidos.</div>`;
+    }
+  }
+
+  document.getElementById("closeUserOrdersModal").addEventListener("click", () => {
+    document.getElementById("userOrdersModal").classList.remove("open");
+  });
+  document.getElementById("userOrdersModal").addEventListener("click", (e) => {
+    if (e.target.id === "userOrdersModal") e.currentTarget.classList.remove("open");
+  });
+
+  // ---------- Settings tab ----------
+  async function loadSettings() {
+    try {
+      const { settings } = await API.get("/admin/settings");
+      document.getElementById("cfgDiscord").value = settings.discordUrl || "";
+      document.getElementById("cfgWhatsapp").value = settings.whatsappUrl || "";
+      document.getElementById("cfgEmail").value = settings.contactEmail || "";
+      document.getElementById("cfgAnnouncement").value = settings.announcement || "";
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+    try {
+      await API.put("/admin/settings", {
+        discordUrl: document.getElementById("cfgDiscord").value.trim(),
+        whatsappUrl: document.getElementById("cfgWhatsapp").value.trim(),
+        contactEmail: document.getElementById("cfgEmail").value.trim(),
+        announcement: document.getElementById("cfgAnnouncement").value.trim(),
+      });
+      const successBox = document.getElementById("settingsSuccess");
+      successBox.style.display = "block";
+      setTimeout(() => (successBox.style.display = "none"), 3000);
+    } catch (e) {
+      alert(e.message || "Não foi possível salvar as configurações.");
+    }
+  });
+
+  (async () => {
+    const ok = await checkAccess();
+    if (ok) loadDashboard();
+  })();
+</script>
+</body>
+</html>

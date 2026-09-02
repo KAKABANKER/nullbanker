@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Criar conta — NULLBANKER</title>
+<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:80px;border-bottom:none;">
+  <div class="wrap auth-wrap">
+    <div class="eyebrow-num center-text">acesso</div>
+    <h2 class="center-text">Criar conta</h2>
+    <div class="auth-box mt-40">
+      <div class="msg error" id="regError"></div>
+      <form id="regForm">
+        <div class="field">
+          <label for="name">Nome completo</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" required />
+        </div>
+        <div class="field">
+          <label for="phone">Telefone (opcional)</label>
+          <input type="tel" id="phone" placeholder="(00) 00000-0000" />
+        </div>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input type="password" id="password" required minlength="6" />
+        </div>
+        <p class="helper">Mínimo de 6 caracteres.</p>
+        <button type="submit" class="btn btn-primary btn-block" id="regBtn">Criar conta</button>
+      </form>
+    </div>
+    <div class="auth-switch">Já tem conta? <a href="/login.html">Entrar</a></div>
+  </div>
+</section>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+  document.getElementById("regForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById("regError");
+    errorBox.textContent = "";
+    errorBox.classList.remove("error");
+    const btn = document.getElementById("regBtn");
+    btn.disabled = true;
+    btn.textContent = "Criando conta...";
+
+    try {
+      const data = await API.post("/auth/register", {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        password: document.getElementById("password").value,
+      });
+      API.setToken(data.token);
+      API.setUser(data.user);
+      window.location.href = "/";
+    } catch (err) {
+      errorBox.textContent = err.message || "Não foi possível criar a conta.";
+      errorBox.classList.add("error");
+      btn.disabled = false;
+      btn.textContent = "Criar conta";
+    }
+  });
+</script>
+</body>
+</html>

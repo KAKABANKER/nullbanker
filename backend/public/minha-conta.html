@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Minha conta — NULLBANKER</title>
+<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:64px;">
+  <div class="wrap two-col">
+    <div>
+      <div class="eyebrow-num">conta</div>
+      <h2>Meus dados</h2>
+      <div class="ledger mt-40">
+        <div style="padding:20px;">
+          <div class="msg error" id="profileError"></div>
+          <div class="msg success" id="profileSuccess"></div>
+          <form id="profileForm">
+            <div class="field">
+              <label for="pfName">Nome completo</label>
+              <input type="text" id="pfName" required />
+            </div>
+            <div class="field">
+              <label for="pfEmail">E-mail</label>
+              <input type="email" id="pfEmail" required />
+            </div>
+            <div class="field">
+              <label for="pfPhone">Telefone (opcional)</label>
+              <input type="tel" id="pfPhone" placeholder="(00) 00000-0000" />
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="ledger mt-40">
+        <div class="ledger-head"><span>ALTERAR SENHA</span><span></span></div>
+        <div style="padding:20px;">
+          <div class="msg error" id="passwordError"></div>
+          <div class="msg success" id="passwordSuccess"></div>
+          <form id="passwordForm">
+            <div class="field">
+              <label for="currentPassword">Senha atual</label>
+              <input type="password" id="currentPassword" />
+            </div>
+            <div class="field">
+              <label for="newPassword">Nova senha</label>
+              <input type="password" id="newPassword" minlength="6" />
+            </div>
+            <button type="submit" class="btn btn-outline">Atualizar senha</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow-num">histórico</div>
+      <h2>Meus pedidos</h2>
+      <div class="statement mt-40" id="ordersList">
+        <div class="empty-state"><span class="spinner-line">carregando...</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 NULLBANKER.</span>
+      <span>desenvolvido por nuitbanker</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+  const statusLabels = {
+    paid: "Pago", pending: "Pendente", failed: "Falhou", cancelled: "Cancelado", refunded: "Reembolsado",
+  };
+
+  function showMsg(el, text, type) {
+    el.textContent = text;
+    el.className = `msg ${type}`;
+  }
+  function hideMsg(el) {
+    el.textContent = "";
+    el.className = "msg";
+  }
+
+  async function loadProfile() {
+    try {
+      const { user } = await API.get("/auth/profile");
+      document.getElementById("pfName").value = user.name;
+      document.getElementById("pfEmail").value = user.email;
+      document.getElementById("pfPhone").value = user.phone || "";
+    } catch (e) {
+      window.location.href = "/login.html";
+    }
+  }
+
+  document.getElementById("profileForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById("profileError");
+    const successBox = document.getElementById("profileSuccess");
+    hideMsg(errorBox);
+    hideMsg(successBox);
+    try {
+      const data = await API.put("/auth/profile", {
+        name: document.getElementById("pfName").value.trim(),
+        email: document.getElementById("pfEmail").value.trim(),
+        phone: document.getElementById("pfPhone").value.trim(),
+      });
+      API.setToken(data.token);
+      API.setUser(data.user);
+      showMsg(successBox, "Dados atualizados com sucesso.", "success");
+    } catch (err) {
+      showMsg(errorBox, err.message || "Não foi possível salvar.", "error");
+    }
+  });
+
+  document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorBox = document.getElementById("passwordError");
+    const successBox = document.getElementById("passwordSuccess");
+    hideMsg(errorBox);
+    hideMsg(successBox);
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    if (!currentPassword || !newPassword) {
+      showMsg(errorBox, "Preencha a senha atual e a nova senha.", "error");
+      return;
+    }
+    try {
+      const data = await API.put("/auth/profile", { currentPassword, newPassword });
+      API.setToken(data.token);
+      API.setUser(data.user);
+      showMsg(successBox, "Senha atualizada com sucesso.", "success");
+      document.getElementById("passwordForm").reset();
+    } catch (err) {
+      showMsg(errorBox, err.message || "Não foi possível atualizar a senha.", "error");
+    }
+  });
+
+  async function loadOrders() {
+    const list = document.getElementById("ordersList");
+    try {
+      const { orders } = await API.get("/orders");
+      if (!orders.length) {
+        list.innerHTML = `<div class="empty-state">Você ainda não fez nenhum pedido.</div>`;
+        return;
+      }
+      list.innerHTML = orders
+        .map((o, i) => `
+          <div class="statement-row">
+            <span class="statement-index">${String(i + 1).padStart(2, "0")}</span>
+            <span>
+              <span class="statement-name">${o.product.name}</span>
+              <div class="statement-desc">${formatDate(o.createdAt)} · ${statusLabels[o.status] || o.status}</div>
+            </span>
+            <span class="statement-price">${formatBRL(o.amount)}</span>
+            <span></span>
+          </div>
+        `)
+        .join("");
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state">Não foi possível carregar seus pedidos.</div>`;
+    }
+  }
+
+  if (!API.token()) {
+    window.location.href = "/login.html";
+  } else {
+    loadProfile();
+    loadOrders();
+  }
+</script>
+</body>
+</html>

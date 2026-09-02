@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Produto — NULLBANKER</title>
+<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html" class="active">Produtos</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:56px;">
+  <div class="wrap two-col" id="productWrap">
+    <div class="empty-state"><span class="spinner-line">carregando produto...</span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 NULLBANKER.</span>
+      <span>desenvolvido por nuitbanker</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+  let currentProduct = null;
+  let selectedPayment = null;
+  let slideIndex = 0;
+  let slideImages = [];
+
+  function renderSlider(images) {
+    if (!images.length) return "";
+    return `
+      <div class="slider" id="productSlider">
+        <div class="slider-track" id="sliderTrack">
+          ${images.map((src) => `<div class="slide"><img src="${src}" alt="Foto do site" /></div>`).join("")}
+        </div>
+        ${images.length > 1 ? `
+          <button type="button" class="slider-arrow prev" id="sliderPrev" aria-label="Foto anterior">‹</button>
+          <button type="button" class="slider-arrow next" id="sliderNext" aria-label="Próxima foto">›</button>
+          <div class="slider-dots" id="sliderDots">
+            ${images.map((_, i) => `<span class="slider-dot ${i === 0 ? "active" : ""}" data-i="${i}"></span>`).join("")}
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+
+  function goToSlide(i) {
+    slideIndex = (i + slideImages.length) % slideImages.length;
+    const track = document.getElementById("sliderTrack");
+    if (track) track.style.transform = `translateX(-${slideIndex * 100}%)`;
+    document.querySelectorAll(".slider-dot").forEach((dot, idx) => {
+      dot.classList.toggle("active", idx === slideIndex);
+    });
+  }
+
+  function bindSlider() {
+    const prev = document.getElementById("sliderPrev");
+    const next = document.getElementById("sliderNext");
+    if (prev) prev.addEventListener("click", () => goToSlide(slideIndex - 1));
+    if (next) next.addEventListener("click", () => goToSlide(slideIndex + 1));
+    document.querySelectorAll(".slider-dot").forEach((dot) => {
+      dot.addEventListener("click", () => goToSlide(Number(dot.dataset.i)));
+    });
+  }
+
+  function renderProduct(p) {
+    const wrap = document.getElementById("productWrap");
+    slideImages = [p.imageUrl, ...(p.images || [])].filter(Boolean);
+
+    wrap.innerHTML = `
+      <div>
+        ${slideImages.length ? renderSlider(slideImages) : `<div class="product-hero-media"><span class="no-image" style="position:static;">sem fotos ainda</span></div>`}
+        <div class="eyebrow-num mt-40">produto</div>
+        <h2>${p.name}</h2>
+        <p class="lede">${p.description}</p>
+        <ul class="feature-list">
+          ${(p.features || []).map((f) => `<li>${f}</li>`).join("")}
+        </ul>
+      </div>
+      <div>
+        <div class="checkout-card">
+          <div class="checkout-head">
+            <span class="eyebrow-num" style="margin:0;">resumo do pedido</span>
+            <h3 style="margin:6px 0 0;">${p.name}</h3>
+          </div>
+          <div class="checkout-price-row">
+            <span>Valor total</span>
+            <span class="checkout-price">${formatBRL(p.price)}</span>
+          </div>
+
+          <form id="orderForm">
+            <div class="field">
+              <label for="customerName">Nome completo</label>
+              <input type="text" id="customerName" required />
+            </div>
+            <div class="field">
+              <label for="customerEmail">E-mail</label>
+              <input type="email" id="customerEmail" required />
+            </div>
+
+            <label>Forma de pagamento</label>
+            <div class="pay-options">
+              <button type="button" class="pay-option" data-method="credit_card">
+                <strong>Cartão de crédito</strong>
+                <span>Checkout seguro via Stripe</span>
+              </button>
+              <button type="button" class="pay-option" data-method="pix">
+                <strong>Pix</strong>
+                <span>QR Code gerado na hora</span>
+              </button>
+            </div>
+
+            <div class="field" id="cpfField" style="display:none;">
+              <label for="cpf">CPF (necessário para Pix)</label>
+              <input type="text" id="cpf" placeholder="Somente números" />
+            </div>
+
+            <div class="msg error" id="orderError"></div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="orderSubmit" disabled>
+              Selecione uma forma de pagamento
+            </button>
+            <p class="checkout-note">🔒 Checkout pronto para Stripe (cartão) e Mercado Pago (Pix) — assim que a gateway for conectada pelo admin, o pagamento é processado automaticamente.</p>
+          </form>
+
+          <div id="pixResult" style="display:none;">
+            <div class="checkout-price-row" style="border-top:none;">
+              <span>Pix gerado</span>
+              <span class="checkout-price" id="pixAmount"></span>
+            </div>
+            <img id="pixQr" alt="QR Code Pix" style="max-width:200px;margin:0 auto 16px;border:1px solid var(--black);display:block;" />
+            <label>Copia e cola</label>
+            <textarea id="pixCode" rows="3" readonly></textarea>
+            <button class="btn btn-outline btn-block mt-40" id="copyPix" type="button">Copiar código Pix</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (slideImages.length > 1) bindSlider();
+
+    document.querySelectorAll(".pay-option").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pay-option").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedPayment = btn.dataset.method;
+        document.getElementById("cpfField").style.display =
+          selectedPayment === "pix" ? "block" : "none";
+        const submitBtn = document.getElementById("orderSubmit");
+        submitBtn.disabled = false;
+        submitBtn.textContent =
+          selectedPayment === "pix" ? "Gerar Pix" : "Ir para pagamento seguro";
+      });
+    });
+
+    document.getElementById("orderForm").addEventListener("submit", handleSubmit);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const errorBox = document.getElementById("orderError");
+    errorBox.classList.remove("error");
+    errorBox.textContent = "";
+
+    const customerName = document.getElementById("customerName").value.trim();
+    const customerEmail = document.getElementById("customerEmail").value.trim();
+    const cpf = document.getElementById("cpf") ? document.getElementById("cpf").value.trim() : "";
+
+    if (!customerName || !customerEmail || !selectedPayment) {
+      errorBox.textContent = "Preencha os dados e escolha a forma de pagamento.";
+      errorBox.classList.add("error");
+      return;
+    }
+
+    const submitBtn = document.getElementById("orderSubmit");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Processando...";
+
+    try {
+      const data = await API.post("/orders", {
+        productId: currentProduct.id,
+        paymentMethod: selectedPayment,
+        customerName,
+        customerEmail,
+        cpf,
+      });
+
+      if (selectedPayment === "credit_card") {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      document.getElementById("orderForm").style.display = "none";
+      const resultBox = document.getElementById("pixResult");
+      resultBox.style.display = "block";
+      document.getElementById("pixAmount").textContent = formatBRL(currentProduct.price);
+      document.getElementById("pixCode").value = data.pix.qrCode || "Código não disponível.";
+      if (data.pix.qrCodeBase64) {
+        document.getElementById("pixQr").src = `data:image/png;base64,${data.pix.qrCodeBase64}`;
+      }
+      document.getElementById("copyPix").addEventListener("click", () => {
+        navigator.clipboard.writeText(data.pix.qrCode || "");
+        document.getElementById("copyPix").textContent = "Código copiado!";
+      });
+    } catch (err) {
+      errorBox.textContent = err.message || "Não foi possível processar o pedido.";
+      errorBox.classList.add("error");
+      submitBtn.disabled = false;
+      submitBtn.textContent = selectedPayment === "pix" ? "Gerar Pix" : "Ir para pagamento seguro";
+    }
+  }
+
+  async function init() {
+    const slug = qs("slug");
+    if (!slug) {
+      document.getElementById("productWrap").innerHTML = `<div class="empty-state">Produto não especificado.</div>`;
+      return;
+    }
+    try {
+      const data = await API.get(`/products/${slug}`);
+      currentProduct = data.product;
+      renderProduct(currentProduct);
+    } catch (e) {
+      document.getElementById("productWrap").innerHTML = `<div class="empty-state">Produto não encontrado.</div>`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

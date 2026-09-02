@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Produtos — NULLBANKER</title>
+<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html" class="active">Produtos</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:64px;">
+  <div class="wrap">
+    <div class="eyebrow-num">catálogo</div>
+    <h2>Produtos</h2>
+    <p class="lede" style="margin-bottom:40px;">Escolha o tipo de site ou sistema. Todos os preços incluem entrega no ar.</p>
+
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Buscar por nome ou descrição..." />
+      <button class="btn btn-outline" id="searchBtn">Buscar</button>
+    </div>
+
+    <div class="product-grid" id="productList">
+      <div class="product-card"><div class="product-card-body"><span class="spinner-line">carregando produtos...</span></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 NULLBANKER.</span>
+      <span>desenvolvido por nuitbanker</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+  function renderProducts(products) {
+    const list = document.getElementById("productList");
+    if (!products.length) {
+      list.innerHTML = `<div class="product-card"><div class="product-card-body">Nenhum produto encontrado.</div></div>`;
+      return;
+    }
+    list.innerHTML = products
+      .map((p, i) => `
+        <a class="product-card" href="/produto.html?slug=${p.slug}">
+          <div class="product-card-media">
+            ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" />` : `<span class="no-image">sem imagem</span>`}
+          </div>
+          <div class="product-card-body">
+            <span class="statement-index">${String(i + 1).padStart(2, "0")}</span>
+            <span class="statement-name">${p.name}</span>
+            <div class="statement-desc">${p.shortDesc}</div>
+            <div class="product-card-footer">
+              <span class="statement-price">${formatBRL(p.price)}</span>
+              <span style="font-size:13px;">Ver detalhes →</span>
+            </div>
+          </div>
+        </a>
+      `)
+      .join("");
+  }
+
+  async function loadProducts(q) {
+    const list = document.getElementById("productList");
+    list.innerHTML = `<div class="product-card"><div class="product-card-body"><span class="spinner-line">carregando produtos...</span></div></div>`;
+    try {
+      const query = q ? `?q=${encodeURIComponent(q)}` : "";
+      const data = await API.get(`/products${query}`);
+      renderProducts(data.products);
+    } catch (e) {
+      list.innerHTML = `<div class="product-card"><div class="product-card-body">Não foi possível carregar os produtos agora.</div></div>`;
+    }
+  }
+
+  document.getElementById("searchBtn").addEventListener("click", () => {
+    loadProducts(document.getElementById("searchInput").value.trim());
+  });
+  document.getElementById("searchInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loadProducts(e.target.value.trim());
+  });
+
+  loadProducts();
+</script>
+</body>
+</html>

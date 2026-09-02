@@ -1,0 +1,41 @@
+databases:
+  - name: nullbanker-db
+    plan: free
+    databaseName: nullbanker
+    user: nullbanker
+
+services:
+  - type: web
+    name: nullbanker
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma migrate deploy
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nullbanker-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: SUPPORT_DISCORD_URL
+        sync: false
+      - key: SUPPORT_WHATSAPP_URL
+        sync: false

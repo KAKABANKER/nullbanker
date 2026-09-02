@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pedido — NULLBANKER</title>
+<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:80px;">
+  <div class="wrap" style="max-width:560px;">
+    <div class="eyebrow-num">pedido</div>
+    <h2 id="statusTitle">Verificando pagamento...</h2>
+    <p class="lede" id="statusText">Aguarde um instante enquanto confirmamos o status do seu pedido.</p>
+
+    <div class="ledger mt-40" id="orderLedger" style="display:none;">
+      <div class="ledger-head"><span>PEDIDO #<span id="orderId"></span></span><span id="orderStatus"></span></div>
+      <div class="ledger-row"><span>Produto</span><span class="num" id="orderProduct"></span></div>
+      <div class="ledger-row"><span>Valor</span><span class="num" id="orderAmount"></span></div>
+      <div class="ledger-row"><span>Forma de pagamento</span><span class="num" id="orderMethod"></span></div>
+    </div>
+
+    <a href="/suporte.html" class="btn btn-outline mt-40">Precisa de ajuda? Fale com o suporte</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 NULLBANKER.</span>
+      <span>desenvolvido por nuitbanker</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+  const statusLabels = {
+    paid: "Pagamento confirmado",
+    pending: "Aguardando confirmação de pagamento",
+    failed: "Pagamento não aprovado",
+    cancelled: "Pedido cancelado",
+    refunded: "Pedido reembolsado",
+  };
+
+  const methodLabels = { credit_card: "Cartão de crédito", pix: "Pix" };
+
+  async function checkOrder(attempt = 0) {
+    const id = qs("order");
+    if (!id) {
+      document.getElementById("statusTitle").textContent = "Pedido não encontrado.";
+      document.getElementById("statusText").textContent = "";
+      return;
+    }
+    try {
+      const { order } = await API.get(`/orders/${id}`);
+      document.getElementById("statusTitle").textContent = statusLabels[order.status] || order.status;
+      document.getElementById("statusText").textContent =
+        order.status === "paid"
+          ? "Recebemos a confirmação do pagamento. O desenvolvimento começa em seguida — acompanhe pelo suporte."
+          : order.status === "pending"
+          ? "O pagamento ainda está sendo processado pela operadora. Esta página atualiza sozinha."
+          : "Se você acredita que isso é um engano, fale com o suporte.";
+
+      document.getElementById("orderLedger").style.display = "block";
+      document.getElementById("orderId").textContent = order.id;
+      document.getElementById("orderStatus").textContent = statusLabels[order.status] || order.status;
+      document.getElementById("orderProduct").textContent = order.product.name;
+      document.getElementById("orderAmount").textContent = formatBRL(order.amount);
+      document.getElementById("orderMethod").textContent = methodLabels[order.paymentMethod] || order.paymentMethod;
+
+      if (order.status === "pending" && attempt < 10) {
+        setTimeout(() => checkOrder(attempt + 1), 4000);
+      }
+    } catch (e) {
+      document.getElementById("statusTitle").textContent = "Não foi possível verificar o pedido.";
+      document.getElementById("statusText").textContent = "";
+    }
+  }
+
+  checkOrder();
+</script>
+</body>
+</html>
