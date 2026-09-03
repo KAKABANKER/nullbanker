@@ -7,7 +7,7 @@
 <link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
-<body>
+<body class="admin-page">
 
 <div class="admin-shell" id="adminShell" style="display:none;">
   <aside class="admin-side">
@@ -69,13 +69,10 @@
         <div class="ledger-head"><span id="productFormTitle">Novo produto</span><span></span></div>
         <div style="padding:20px;">
           <input type="hidden" id="pId" />
-          <input type="hidden" id="pImageUrl" />
           <div class="field">
-            <label>Imagem de capa (aparece na listagem de produtos)</label>
-            <div class="image-upload-box" id="imageUploadBox">
-              <span class="placeholder-text">Clique para escolher uma imagem (JPG, PNG ou WEBP — até 5MB)</span>
-            </div>
-            <input type="file" id="pImageFile" accept="image/*" style="display:none;" />
+            <label>URL da imagem de capa (aparece na listagem de produtos)</label>
+            <input type="text" id="pImageUrl" placeholder="https://..." />
+            <div class="image-preview-box" id="imagePreviewBox"></div>
           </div>
           <div class="field"><label>Nome</label><input type="text" id="pName" /></div>
           <div class="field"><label>Descrição curta</label><input type="text" id="pShortDesc" /></div>
@@ -84,8 +81,10 @@
           <div class="field">
             <label>Galeria de fotos (aparece em slide na página do produto)</label>
             <div class="gallery-grid" id="galleryGrid"></div>
-            <button type="button" class="btn btn-outline" id="addGalleryImageBtn" style="margin-top:10px;">+ Adicionar foto à galeria</button>
-            <input type="file" id="pGalleryFile" accept="image/*" style="display:none;" />
+            <div style="display:flex;gap:10px;margin-top:10px;">
+              <input type="text" id="pGalleryUrlInput" placeholder="https://... (cole o link da foto)" />
+              <button type="button" class="btn btn-outline" id="addGalleryImageBtn">+ Adicionar</button>
+            </div>
           </div>
           <div class="field"><label>Características (uma por linha)</label><textarea id="pFeatures" rows="4"></textarea></div>
           <div style="display:flex;gap:12px;">
@@ -123,6 +122,24 @@
           </div>
           <div class="msg success" id="settingsSuccess" style="display:none;">Configurações salvas.</div>
           <button class="btn btn-primary" id="saveSettingsBtn">Salvar configurações</button>
+        </div>
+      </div>
+
+      <div class="ledger mt-40" style="max-width:600px;">
+        <div class="ledger-head"><span>SEGURANÇA DA CONTA ADMIN</span><span></span></div>
+        <div style="padding:20px;">
+          <p class="helper" style="margin-top:0;">Trocar a senha desta conta de administrador (a que você está usando agora).</p>
+          <div class="msg error" id="adminPwError"></div>
+          <div class="msg success" id="adminPwSuccess"></div>
+          <div class="field">
+            <label>Senha atual</label>
+            <input type="password" id="adminCurrentPassword" />
+          </div>
+          <div class="field">
+            <label>Nova senha</label>
+            <input type="password" id="adminNewPassword" minlength="6" />
+          </div>
+          <button class="btn btn-outline" id="saveAdminPasswordBtn">Atualizar senha</button>
         </div>
       </div>
     </div>
@@ -400,7 +417,7 @@
       .map(
         (url, i) => `
         <div class="gallery-thumb">
-          <img src="${url}" alt="Foto ${i + 1}" />
+          <img src="${url}" alt="Foto ${i + 1}" onerror="this.closest('.gallery-thumb').classList.add('broken')" />
           <button type="button" class="gallery-remove" data-i="${i}">×</button>
         </div>`
       )
@@ -414,74 +431,26 @@
   }
 
   document.getElementById("addGalleryImageBtn").addEventListener("click", () => {
-    document.getElementById("pGalleryFile").click();
+    const input = document.getElementById("pGalleryUrlInput");
+    const url = input.value.trim();
+    if (!url) return;
+    galleryImages.push(url);
+    input.value = "";
+    renderGallery();
   });
-
-  document.getElementById("pGalleryFile").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    const btn = document.getElementById("addGalleryImageBtn");
-    const originalText = btn.textContent;
-    btn.textContent = "Enviando...";
-    btn.disabled = true;
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/products/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${API.token()}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Falha no upload.");
-      galleryImages.push(data.url);
-      renderGallery();
-    } catch (err) {
-      alert(err.message || "Não foi possível enviar a imagem.");
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
+  document.getElementById("pGalleryUrlInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("addGalleryImageBtn").click();
     }
   });
 
-  function setImagePreview(url) {
-    const box = document.getElementById("imageUploadBox");
-    document.getElementById("pImageUrl").value = url || "";
-    if (url) {
-      box.classList.add("has-image");
-      box.innerHTML = `<img src="${url}" alt="Preview" />`;
-    } else {
-      box.classList.remove("has-image");
-      box.innerHTML = `<span class="placeholder-text">Clique para escolher uma imagem (JPG, PNG ou WEBP — até 5MB)</span>`;
-    }
+  function updateImagePreview() {
+    const url = document.getElementById("pImageUrl").value.trim();
+    const box = document.getElementById("imagePreviewBox");
+    box.innerHTML = url ? `<img src="${url}" alt="Preview" onerror="this.style.display='none'" />` : "";
   }
-
-  document.getElementById("imageUploadBox").addEventListener("click", () => {
-    document.getElementById("pImageFile").click();
-  });
-
-  document.getElementById("pImageFile").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const box = document.getElementById("imageUploadBox");
-    box.innerHTML = `<span class="placeholder-text">enviando imagem...</span>`;
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/products/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${API.token()}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Falha no upload.");
-      setImagePreview(data.url);
-    } catch (err) {
-      alert(err.message || "Não foi possível enviar a imagem.");
-      setImagePreview(document.getElementById("pImageUrl").value);
-    }
-  });
+  document.getElementById("pImageUrl").addEventListener("input", updateImagePreview);
 
   function openProductForm(product) {
     document.getElementById("productForm").style.display = "block";
@@ -492,7 +461,8 @@
     document.getElementById("pDescription").value = product ? product.description : "";
     document.getElementById("pPrice").value = product ? product.price : "";
     document.getElementById("pFeatures").value = product ? (product.features || []).join("\n") : "";
-    setImagePreview(product ? product.imageUrl : "");
+    document.getElementById("pImageUrl").value = product ? (product.imageUrl || "") : "";
+    updateImagePreview();
     galleryImages = product ? [...(product.images || [])] : [];
     renderGallery();
   }
@@ -500,7 +470,6 @@
   document.getElementById("newProductBtn").addEventListener("click", () => openProductForm(null));
   document.getElementById("cancelProductBtn").addEventListener("click", () => {
     document.getElementById("productForm").style.display = "none";
-    document.getElementById("pImageFile").value = "";
   });
 
   document.getElementById("saveProductBtn").addEventListener("click", async () => {
@@ -529,6 +498,7 @@
     const wrap = document.getElementById("usersTableWrap");
     try {
       const { users } = await API.get("/admin/users");
+      const me = API.user();
       wrap.innerHTML = users.length
         ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Admin</th><th>Pedidos</th><th>Desde</th><th></th></tr></thead>
            <tbody>${users
@@ -540,7 +510,14 @@
                 <td>${u.isAdmin ? "Sim" : "Não"}</td>
                 <td>${u._count ? u._count.orders : 0}</td>
                 <td>${formatDate(u.createdAt)}</td>
-                <td><button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${u.name}">Ver pedidos</button></td>
+                <td style="white-space:nowrap;">
+                  <button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${u.name}">Ver pedidos</button>
+                  ${
+                    me && u.id === me.id
+                      ? ""
+                      : `<button class="btn btn-outline toggleAdminBtn" data-id="${u.id}" data-admin="${u.isAdmin}">${u.isAdmin ? "Remover admin" : "Tornar admin"}</button>`
+                  }
+                </td>
               </tr>`
              )
              .join("")}</tbody></table>`
@@ -548,6 +525,20 @@
 
       wrap.querySelectorAll(".viewUserOrdersBtn").forEach((btn) =>
         btn.addEventListener("click", () => openUserOrdersModal(btn.dataset.id, btn.dataset.name))
+      );
+
+      wrap.querySelectorAll(".toggleAdminBtn").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          const makeAdmin = btn.dataset.admin !== "true";
+          const label = makeAdmin ? "tornar este usuário admin" : "remover o acesso admin deste usuário";
+          if (!confirm(`Tem certeza que quer ${label}?`)) return;
+          try {
+            await API.put(`/admin/users/${btn.dataset.id}`, { isAdmin: makeAdmin });
+            loadUsers();
+          } catch (e) {
+            alert(e.message || "Não foi possível atualizar o usuário.");
+          }
+        })
       );
     } catch (e) {
       wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os usuários.</div>`;
@@ -604,6 +595,35 @@
       setTimeout(() => (successBox.style.display = "none"), 3000);
     } catch (e) {
       alert(e.message || "Não foi possível salvar as configurações.");
+    }
+  });
+
+  document.getElementById("saveAdminPasswordBtn").addEventListener("click", async () => {
+    const errorBox = document.getElementById("adminPwError");
+    const successBox = document.getElementById("adminPwSuccess");
+    errorBox.className = "msg";
+    errorBox.textContent = "";
+    successBox.className = "msg";
+    successBox.textContent = "";
+
+    const currentPassword = document.getElementById("adminCurrentPassword").value;
+    const newPassword = document.getElementById("adminNewPassword").value;
+    if (!currentPassword || !newPassword) {
+      errorBox.textContent = "Preencha a senha atual e a nova senha.";
+      errorBox.className = "msg error";
+      return;
+    }
+    try {
+      const data = await API.put("/auth/profile", { currentPassword, newPassword });
+      API.setToken(data.token);
+      API.setUser(data.user);
+      successBox.textContent = "Senha atualizada com sucesso.";
+      successBox.className = "msg success";
+      document.getElementById("adminCurrentPassword").value = "";
+      document.getElementById("adminNewPassword").value = "";
+    } catch (err) {
+      errorBox.textContent = err.message || "Não foi possível atualizar a senha.";
+      errorBox.className = "msg error";
     }
   });
 

@@ -1,7 +1,6 @@
 const express = require("express");
 const { prisma } = require("../db");
 const { requireAdmin } = require("../middleware/auth");
-const { upload } = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -57,19 +56,6 @@ router.get("/:slug", async (req, res) => {
     console.error("Erro ao buscar produto:", err);
     res.status(500).json({ error: "Não foi possível carregar o produto." });
   }
-});
-
-// POST /api/products/upload -> sobe uma imagem e devolve a URL pública (admin)
-router.post("/upload", requireAdmin, (req, res) => {
-  upload.single("image")(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message || "Não foi possível enviar a imagem." });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: "Nenhum arquivo enviado." });
-    }
-    res.json({ url: `/uploads/products/${req.file.filename}` });
-  });
 });
 
 // POST /api/products -> criar (admin)

@@ -84,18 +84,76 @@
   <div class="wrap">
     <div class="eyebrow-num">o que fazemos</div>
     <h2>Três formas de tirar o projeto do papel</h2>
-    <div class="mt-40" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--black);border:1px solid var(--black);">
-      <div style="background:var(--white);padding:28px;">
+    <div class="offer-grid mt-40">
+      <div class="offer-card">
         <h3>Institucional</h3>
-        <p style="font-size:14.5px;color:var(--grey-dark);">Presença profissional, páginas de serviço, portfólio e contato — pensado para transmitir credibilidade.</p>
+        <p>Presença profissional, páginas de serviço, portfólio e contato — pensado para transmitir credibilidade.</p>
       </div>
-      <div style="background:var(--white);padding:28px;">
+      <div class="offer-card">
         <h3>Loja virtual</h3>
-        <p style="font-size:14.5px;color:var(--grey-dark);">Catálogo, checkout com cartão e Pix, painel de pedidos — tudo integrado, sem plataforma de terceiros.</p>
+        <p>Catálogo, checkout com cartão e Pix, painel de pedidos — tudo integrado, sem plataforma de terceiros.</p>
       </div>
-      <div style="background:var(--white);padding:28px;">
+      <div class="offer-card">
         <h3>Sistema sob medida</h3>
-        <p style="font-size:14.5px;color:var(--grey-dark);">Painéis internos, automações e integrações específicas para o processo do seu negócio.</p>
+        <p>Painéis internos, automações e integrações específicas para o processo do seu negócio.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow-num">diferenciais</div>
+    <h2>Por que fechar com a NULLBANKER</h2>
+    <div class="diff-grid">
+      <div class="diff-item">
+        <span class="diff-mark">01</span>
+        <div><h4>Banco de dados de verdade</h4><p>PostgreSQL de produção, não uma planilha disfarçada de construtor de sites.</p></div>
+      </div>
+      <div class="diff-item">
+        <span class="diff-mark">02</span>
+        <div><h4>Painel administrativo incluso</h4><p>Você acompanha pedidos, clientes e configurações sem depender de terceiros.</p></div>
+      </div>
+      <div class="diff-item">
+        <span class="diff-mark">03</span>
+        <div><h4>Suporte direto com quem desenvolve</h4><p>Sem central de atendimento genérica — você fala com quem escreveu o código.</p></div>
+      </div>
+      <div class="diff-item">
+        <span class="diff-mark">04</span>
+        <div><h4>Sem mensalidade de plataforma</h4><p>O código é seu. Nada de ficar refém de assinatura de construtor de site.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow-num">perguntas frequentes</div>
+    <h2>Antes de fechar</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" type="button">
+          <span>Quanto tempo leva um projeto?</span><span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Entre 3 e 14 dias úteis, dependendo do tipo de produto e da complexidade do escopo — o prazo estimado aparece na página de cada produto.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button">
+          <span>O código fica comigo?</span><span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Sim. O projeto é entregue sob seu domínio, sem dependência de mensalidade de plataforma ou construtor de terceiros.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button">
+          <span>Como funciona o suporte depois da entrega?</span><span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Pelo Discord ou WhatsApp, com quem efetivamente desenvolveu o projeto — sem intermediário.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" type="button">
+          <span>Quais formas de pagamento vocês aceitam?</span><span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer"><p>Cartão de crédito e Pix, direto no site, sem precisar sair da página do produto.</p></div>
       </div>
     </div>
   </div>
@@ -167,5 +225,22 @@
 
 <script src="/js/api.js"></script>
 <script src="/js/main.js"></script>
+<script>
+  document.querySelectorAll(".faq-question").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = btn.closest(".faq-item");
+      const answer = item.querySelector(".faq-answer");
+      const isOpen = item.classList.contains("open");
+      document.querySelectorAll(".faq-item.open").forEach((openItem) => {
+        openItem.classList.remove("open");
+        openItem.querySelector(".faq-answer").style.maxHeight = null;
+      });
+      if (!isOpen) {
+        item.classList.add("open");
+        answer.style.maxHeight = answer.scrollHeight + "px";
+      }
+    });
+  });
+</script>
 </body>
 </html>
