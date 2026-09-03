@@ -111,4 +111,37 @@ router.post("/mercadopago", async (req, res) => {
   }
 });
 
+// POST /api/webhooks/plumify
+router.post("/plumify", async (req, res) => {
+  try {
+    const { hash, status } = req.body || {};
+
+    await prisma.webhookLog.create({
+      data: { gateway: "plumify", eventType: status || null, payload: req.body },
+    });
+
+    if (hash && status) {
+      let mappedStatus = null;
+      if (status === "paid") mappedStatus = "paid";
+      else if (status === "refused" || status === "chargedback") mappedStatus = "failed";
+      else if (status === "refunded") mappedStatus = "refunded";
+      else if (status === "canceled" || status === "cancelled") mappedStatus = "cancelled";
+
+      if (mappedStatus) {
+        await prisma.order
+          .updateMany({
+            where: { gatewayPaymentId: String(hash) },
+            data: { status: mappedStatus },
+          })
+          .catch(() => {});
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error("Erro ao processar webhook Plumify:", err);
+    res.status(500).json({ error: "Erro ao processar webhook." });
+  }
+});
+
 module.exports = router;

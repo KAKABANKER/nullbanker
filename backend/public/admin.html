@@ -120,7 +120,7 @@
             <label>Aviso no topo do site (opcional)</label>
             <textarea id="cfgAnnouncement" rows="2" placeholder="Ex: Promoção de lançamento — 10% off até domingo."></textarea>
           </div>
-          <div class="msg success" id="settingsSuccess" style="display:none;">Configurações salvas.</div>
+          <div class="msg" id="settingsSuccess"></div>
           <button class="btn btn-primary" id="saveSettingsBtn">Salvar configurações</button>
         </div>
       </div>
@@ -129,8 +129,8 @@
         <div class="ledger-head"><span>SEGURANÇA DA CONTA ADMIN</span><span></span></div>
         <div style="padding:20px;">
           <p class="helper" style="margin-top:0;">Trocar a senha desta conta de administrador (a que você está usando agora).</p>
-          <div class="msg error" id="adminPwError"></div>
-          <div class="msg success" id="adminPwSuccess"></div>
+          <div class="msg" id="adminPwError"></div>
+          <div class="msg" id="adminPwSuccess"></div>
           <div class="field">
             <label>Senha atual</label>
             <input type="password" id="adminCurrentPassword" />
@@ -160,7 +160,7 @@
   <div class="eyebrow-num center-text">acesso restrito</div>
   <h2 class="center-text">Painel administrativo</h2>
   <div class="auth-box mt-40">
-    <div class="msg error" id="adminLoginError"></div>
+    <div class="msg" id="adminLoginError"></div>
     <form id="adminLoginForm">
       <div class="field"><label>E-mail</label><input type="email" id="adminEmail" required /></div>
       <div class="field"><label>Senha</label><input type="password" id="adminPassword" required /></div>
@@ -472,17 +472,45 @@
     document.getElementById("productForm").style.display = "none";
   });
 
+  // Aceita "497", "497.50" ou o formato brasileiro "497,50" / "1.497,50"
+  function parseBRLPrice(raw) {
+    const value = raw.trim();
+    if (!value) return NaN;
+    if (value.includes(",")) {
+      return Number(value.replace(/\./g, "").replace(",", "."));
+    }
+    return Number(value);
+  }
+
   document.getElementById("saveProductBtn").addEventListener("click", async () => {
     const id = document.getElementById("pId").value;
+    const name = document.getElementById("pName").value.trim();
+    const shortDesc = document.getElementById("pShortDesc").value.trim();
+    const description = document.getElementById("pDescription").value.trim();
+    const price = parseBRLPrice(document.getElementById("pPrice").value);
+
+    if (!name || !shortDesc || !description) {
+      alert("Preencha nome, descrição curta e descrição completa.");
+      return;
+    }
+    if (Number.isNaN(price) || price <= 0) {
+      alert("Preencha um preço válido (ex: 497 ou 497,00).");
+      return;
+    }
+
     const payload = {
-      name: document.getElementById("pName").value.trim(),
-      shortDesc: document.getElementById("pShortDesc").value.trim(),
-      description: document.getElementById("pDescription").value.trim(),
-      price: Number(document.getElementById("pPrice").value),
-      imageUrl: document.getElementById("pImageUrl").value || null,
+      name,
+      shortDesc,
+      description,
+      price,
+      imageUrl: document.getElementById("pImageUrl").value.trim() || null,
       images: galleryImages,
       features: document.getElementById("pFeatures").value.split("\n").map((f) => f.trim()).filter(Boolean),
     };
+
+    const btn = document.getElementById("saveProductBtn");
+    btn.disabled = true;
+    btn.textContent = "Salvando...";
     try {
       if (id) await API.put(`/products/${id}`, payload);
       else await API.post("/products", payload);
@@ -490,6 +518,9 @@
       loadProducts();
     } catch (e) {
       alert(e.message || "Não foi possível salvar o produto.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Salvar";
     }
   });
 
@@ -511,12 +542,22 @@
                 <td>${u._count ? u._count.orders : 0}</td>
                 <td>${formatDate(u.createdAt)}</td>
                 <td style="white-space:nowrap;">
-                  <button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${u.name}">Ver pedidos</button>
-                  ${
-                    me && u.id === me.id
-                      ? ""
-                      : `<button class="btn btn-outline toggleAdminBtn" data-id="${u.id}" data-admin="${u.isAdmin}">${u.isAdmin ? "Remover admin" : "Tornar admin"}</button>`
-                  }
+                  <div class="row-actions">
+                    <button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${u.name}">Ver pedidos</button>
+                    ${
+                      u.phone
+                        ? `<a class="btn btn-outline" href="https://wa.me/55${u.phone.replace(/\D/g, "")}" target="_blank" rel="noopener">WhatsApp</a>`
+                        : ""
+                    }
+                    <a class="btn btn-outline" href="mailto:${u.email}">E-mail</a>
+                    ${
+                      me && u.id === me.id
+                        ? ""
+                        : `<button class="btn btn-outline toggleAdminBtn" data-id="${u.id}" data-admin="${u.isAdmin}">${u.isAdmin ? "Remover admin" : "Tornar admin"}</button>
+                           <button class="btn btn-outline resetPasswordBtn" data-id="${u.id}" data-name="${u.name}">Redefinir senha</button>
+                           <button class="btn btn-danger deleteUserBtn" data-id="${u.id}" data-name="${u.name}">Excluir conta</button>`
+                    }
+                  </div>
                 </td>
               </tr>`
              )
@@ -537,6 +578,35 @@
             loadUsers();
           } catch (e) {
             alert(e.message || "Não foi possível atualizar o usuário.");
+          }
+        })
+      );
+
+      wrap.querySelectorAll(".resetPasswordBtn").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          const newPassword = prompt(`Nova senha para ${btn.dataset.name} (mínimo 6 caracteres):`);
+          if (!newPassword) return;
+          if (newPassword.length < 6) {
+            alert("A senha precisa ter ao menos 6 caracteres.");
+            return;
+          }
+          try {
+            await API.put(`/admin/users/${btn.dataset.id}/reset-password`, { newPassword });
+            alert("Senha redefinida com sucesso.");
+          } catch (e) {
+            alert(e.message || "Não foi possível redefinir a senha.");
+          }
+        })
+      );
+
+      wrap.querySelectorAll(".deleteUserBtn").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          if (!confirm(`Excluir a conta de ${btn.dataset.name}? Essa ação não pode ser desfeita.`)) return;
+          try {
+            await API.del(`/admin/users/${btn.dataset.id}`);
+            loadUsers();
+          } catch (e) {
+            alert(e.message || "Não foi possível excluir esta conta.");
           }
         })
       );
@@ -583,6 +653,9 @@
   }
 
   document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+    const successBox = document.getElementById("settingsSuccess");
+    successBox.className = "msg";
+    successBox.textContent = "";
     try {
       await API.put("/admin/settings", {
         discordUrl: document.getElementById("cfgDiscord").value.trim(),
@@ -590,9 +663,12 @@
         contactEmail: document.getElementById("cfgEmail").value.trim(),
         announcement: document.getElementById("cfgAnnouncement").value.trim(),
       });
-      const successBox = document.getElementById("settingsSuccess");
-      successBox.style.display = "block";
-      setTimeout(() => (successBox.style.display = "none"), 3000);
+      successBox.textContent = "Configurações salvas.";
+      successBox.className = "msg success";
+      setTimeout(() => {
+        successBox.className = "msg";
+        successBox.textContent = "";
+      }, 3000);
     } catch (e) {
       alert(e.message || "Não foi possível salvar as configurações.");
     }

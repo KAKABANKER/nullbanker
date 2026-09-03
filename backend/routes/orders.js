@@ -1,6 +1,7 @@
 const express = require("express");
 const { prisma } = require("../db");
 const { optionalAuth, requireAuth } = require("../middleware/auth");
+const plumify = require("../services/plumify");
 
 const router = express.Router();
 
@@ -24,7 +25,15 @@ const APP_URL = process.env.APP_URL || "http://localhost:3000";
 // POST /api/orders -> cria um pedido e inicia o pagamento
 router.post("/", optionalAuth, async (req, res) => {
   try {
-    const { productId, paymentMethod, customerName, customerEmail, cpf } = req.body;
+    const {
+      productId,
+      paymentMethod,
+      customerName,
+      customerEmail,
+      customerPhone,
+      cpf,
+      address,
+    } = req.body;
 
     if (!productId || !paymentMethod || !customerName || !customerEmail) {
       return res.status(400).json({ error: "Dados incompletos para o pedido." });
@@ -38,6 +47,8 @@ router.post("/", optionalAuth, async (req, res) => {
       return res.status(404).json({ error: "Produto não encontrado." });
     }
 
+    const pixGateway = plumify.isConfigured ? "plumify" : "mercadopago";
+
     const order = await prisma.order.create({
       data: {
         userId: req.user ? req.user.id : null,
@@ -47,7 +58,7 @@ router.post("/", optionalAuth, async (req, res) => {
         paymentMethod,
         amount: product.price,
         status: "pending",
-        gateway: paymentMethod === "credit_card" ? "stripe" : "mercadopago",
+        gateway: paymentMethod === "credit_card" ? "stripe" : pixGateway,
       },
     });
 
@@ -88,10 +99,52 @@ router.post("/", optionalAuth, async (req, res) => {
       });
     }
 
-    // Pix via Mercado Pago
+    // ---------- PIX ----------
+
+    if (pixGateway === "plumify") {
+      if (!address || !address.street || !address.number || !address.neighborhood || !address.city || !address.state || !address.zipCode) {
+        return res.status(400).json({
+          error: "Preencha o endereço completo (rua, número, bairro, cidade, estado e CEP) para gerar o Pix.",
+        });
+      }
+      if (!cpf) {
+        return res.status(400).json({ error: "Informe o CPF para gerar o Pix." });
+      }
+
+      try {
+        const result = await plumify.createPixTransaction({
+          amountInReais: product.price,
+          title: product.name,
+          customerName,
+          customerEmail,
+          customerPhone: customerPhone || "",
+          customerCpf: cpf,
+          address,
+          postbackUrl: `${APP_URL}/api/webhooks/plumify`,
+        });
+
+        const updated = await prisma.order.update({
+          where: { id: order.id },
+          data: { gatewayPaymentId: result.hash },
+        });
+
+        return res.status(201).json({
+          order: updated,
+          pix: {
+            qrCode: result.pixCode,
+            qrCodeBase64: result.pixQrCodeBase64,
+          },
+        });
+      } catch (plumifyErr) {
+        console.error("Erro ao gerar Pix via Plumify:", plumifyErr);
+        return res.status(502).json({ error: "Não foi possível gerar o Pix agora. Tente novamente em instantes." });
+      }
+    }
+
+    // Fallback: Mercado Pago (usado apenas se o Plumify não estiver configurado)
     if (!mpPayment) {
       return res.status(503).json({
-        error: "Pagamento via Pix ainda não configurado. Defina MP_ACCESS_TOKEN no servidor.",
+        error: "Pagamento via Pix ainda não configurado. Defina PLUMIFY_API_TOKEN (ou MP_ACCESS_TOKEN) no servidor.",
       });
     }
 

@@ -186,4 +186,44 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
+// DELETE /api/admin/users/:id -> excluir conta de um cliente
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (req.user && req.user.id === id) {
+      return res.status(400).json({ error: "Você não pode excluir a própria conta por aqui." });
+    }
+
+    // Mantém o histórico de pedidos (nome/e-mail já ficam salvos no próprio pedido),
+    // só desvincula da conta que será removida.
+    await prisma.order.updateMany({ where: { userId: id }, data: { userId: null } });
+    await prisma.user.delete({ where: { id } });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Erro ao excluir usuário:", err);
+    res.status(500).json({ error: "Não foi possível excluir este usuário." });
+  }
+});
+
+// PUT /api/admin/users/:id/reset-password -> definir uma nova senha para o cliente
+router.put("/users/:id/reset-password", async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "A nova senha precisa ter ao menos 6 caracteres." });
+    }
+    const bcrypt = require("bcryptjs");
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: Number(req.params.id) },
+      data: { password: hashed },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Erro ao redefinir senha do usuário:", err);
+    res.status(500).json({ error: "Não foi possível redefinir a senha deste usuário." });
+  }
+});
+
 module.exports = router;

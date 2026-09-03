@@ -595,6 +595,7 @@ pre.json-view {
   line-height: 1.75;
   color: #d8d8d4;
   overflow-x: auto;
+  white-space: pre-line;
 }
 .terminal-body .c1 { color: #8a8a86; }
 .terminal-body .c2 { color: #ffffff; }
@@ -1091,3 +1092,46 @@ body.admin-page .spinner-line { color: #7a7a76; }
   transition: max-height 0.25s ease;
 }
 .faq-answer p { font-size: 14.5px; color: var(--grey-dark); padding-bottom: 22px; margin: 0; max-width: 62ch; }
+
+/* ---------- Campos de endereço lado a lado (checkout Pix) ---------- */
+.two-col-inline { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+@media (max-width: 480px) { .two-col-inline { grid-template-columns: 1fr; } }
+
+/* ---------- Ações em linha da tabela de usuários ---------- */
+
+.row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.row-actions .btn { padding: 6px 10px; font-size: 12.5px; }
+
+.btn-danger {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+.btn-danger:hover { background: #c0392b; color: #fff; }
+body.admin-page .btn-danger { border-color: #e05c50; color: #ff8a7a; }
+body.admin-page .btn-danger:hover { background: #e05c50; color: #fff; }
+
+/* ---------- Prevenção de overflow horizontal (conteúdo vazando da tela) ---------- */
+
+html, body { max-width: 100%; overflow-x: hidden; }
+.hero-grid > *, .two-col > *, .about-grid > *, .diff-grid > * { min-width: 0; }
+img, svg { max-width: 100%; }
+pre.json-view { word-break: break-word; }
+
+/* ---------- Animações de entrada e de rolagem ---------- */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.fade-in-up.in-view {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up { opacity: 1; transform: none; animation: none; }
+}

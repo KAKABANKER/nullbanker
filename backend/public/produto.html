@@ -129,17 +129,33 @@
               </button>
             </div>
 
-            <div class="field" id="cpfField" style="display:none;">
-              <label for="cpf">CPF (necessário para Pix)</label>
+            <div class="field" id="pixFields" style="display:none;">
+              <label for="cpf">CPF</label>
               <input type="text" id="cpf" placeholder="Somente números" />
             </div>
+            <div class="field" id="phoneField" style="display:none;">
+              <label for="customerPhone">Telefone (com DDD)</label>
+              <input type="tel" id="customerPhone" placeholder="(00) 00000-0000" />
+            </div>
+            <div id="addressFields" style="display:none;">
+              <div class="field"><label for="addrZip">CEP</label><input type="text" id="addrZip" placeholder="00000-000" /></div>
+              <div class="two-col-inline">
+                <div class="field"><label for="addrStreet">Rua</label><input type="text" id="addrStreet" /></div>
+                <div class="field"><label for="addrNumber">Número</label><input type="text" id="addrNumber" /></div>
+              </div>
+              <div class="field"><label for="addrNeighborhood">Bairro</label><input type="text" id="addrNeighborhood" /></div>
+              <div class="two-col-inline">
+                <div class="field"><label for="addrCity">Cidade</label><input type="text" id="addrCity" /></div>
+                <div class="field"><label for="addrState">Estado (UF)</label><input type="text" id="addrState" maxlength="2" placeholder="SP" /></div>
+              </div>
+            </div>
 
-            <div class="msg error" id="orderError"></div>
+            <div class="msg" id="orderError"></div>
 
             <button type="submit" class="btn btn-primary btn-block" id="orderSubmit" disabled>
               Selecione uma forma de pagamento
             </button>
-            <p class="checkout-note">🔒 Checkout pronto para Stripe (cartão) e Mercado Pago (Pix) — assim que a gateway for conectada pelo admin, o pagamento é processado automaticamente.</p>
+            <p class="checkout-note">🔒 Checkout pronto para Stripe (cartão) e Plumify (Pix) — assim que a gateway for conectada pelo admin, o pagamento é processado automaticamente.</p>
           </form>
 
           <div id="pixResult" style="display:none;">
@@ -163,12 +179,13 @@
         document.querySelectorAll(".pay-option").forEach((b) => b.classList.remove("selected"));
         btn.classList.add("selected");
         selectedPayment = btn.dataset.method;
-        document.getElementById("cpfField").style.display =
-          selectedPayment === "pix" ? "block" : "none";
+        const isPix = selectedPayment === "pix";
+        document.getElementById("pixFields").style.display = isPix ? "block" : "none";
+        document.getElementById("phoneField").style.display = isPix ? "block" : "none";
+        document.getElementById("addressFields").style.display = isPix ? "block" : "none";
         const submitBtn = document.getElementById("orderSubmit");
         submitBtn.disabled = false;
-        submitBtn.textContent =
-          selectedPayment === "pix" ? "Gerar Pix" : "Ir para pagamento seguro";
+        submitBtn.textContent = isPix ? "Gerar Pix" : "Ir para pagamento seguro";
       });
     });
 
@@ -183,7 +200,6 @@
 
     const customerName = document.getElementById("customerName").value.trim();
     const customerEmail = document.getElementById("customerEmail").value.trim();
-    const cpf = document.getElementById("cpf") ? document.getElementById("cpf").value.trim() : "";
 
     if (!customerName || !customerEmail || !selectedPayment) {
       errorBox.textContent = "Preencha os dados e escolha a forma de pagamento.";
@@ -191,18 +207,40 @@
       return;
     }
 
+    const payload = {
+      productId: currentProduct.id,
+      paymentMethod: selectedPayment,
+      customerName,
+      customerEmail,
+    };
+
+    if (selectedPayment === "pix") {
+      const cpf = document.getElementById("cpf").value.trim();
+      const customerPhone = document.getElementById("customerPhone").value.trim();
+      const address = {
+        zipCode: document.getElementById("addrZip").value.trim(),
+        street: document.getElementById("addrStreet").value.trim(),
+        number: document.getElementById("addrNumber").value.trim(),
+        neighborhood: document.getElementById("addrNeighborhood").value.trim(),
+        city: document.getElementById("addrCity").value.trim(),
+        state: document.getElementById("addrState").value.trim(),
+      };
+      if (!cpf || !customerPhone || Object.values(address).some((v) => !v)) {
+        errorBox.textContent = "Preencha CPF, telefone e o endereço completo para gerar o Pix.";
+        errorBox.classList.add("error");
+        return;
+      }
+      payload.cpf = cpf;
+      payload.customerPhone = customerPhone;
+      payload.address = address;
+    }
+
     const submitBtn = document.getElementById("orderSubmit");
     submitBtn.disabled = true;
     submitBtn.textContent = "Processando...";
 
     try {
-      const data = await API.post("/orders", {
-        productId: currentProduct.id,
-        paymentMethod: selectedPayment,
-        customerName,
-        customerEmail,
-        cpf,
-      });
+      const data = await API.post("/orders", payload);
 
       if (selectedPayment === "credit_card") {
         window.location.href = data.checkoutUrl;
