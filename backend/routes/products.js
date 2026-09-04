@@ -77,7 +77,7 @@ router.post("/", requireAdmin, async (req, res) => {
         description,
         price: Number(price),
         imageUrl: imageUrl || null,
-        images: Array.isArray(images) ? images : [],
+        // images: Array.isArray(images) ? images : [],  // <--- COMENTADO
         features: Array.isArray(features) ? features : [],
       },
     });
@@ -101,7 +101,7 @@ router.put("/:id", requireAdmin, async (req, res) => {
         ...(description !== undefined ? { description } : {}),
         ...(price !== undefined ? { price: Number(price) } : {}),
         ...(imageUrl !== undefined ? { imageUrl } : {}),
-        ...(images !== undefined ? { images: Array.isArray(images) ? images : [] } : {}),
+        // ...(images !== undefined ? { images: Array.isArray(images) ? images : [] } : {}), // <--- COMENTADO
         ...(features !== undefined ? { features } : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
       },
