@@ -1,8 +1,11 @@
 const crypto = require("crypto");
 
-const API_TOKEN = process.env.PLUMIFY_API_TOKEN;
-const OFFER_HASH = process.env.PLUMIFY_OFFER_HASH;
-const WEBHOOK_SECRET = process.env.PLUMIFY_WEBHOOK_SECRET;
+// ============================================
+// CREDENCIAIS PLUMIFY - CONFIGURADAS DIRETAMENTE
+// ============================================
+const API_TOKEN = "0RRWtMOuHsAQlR7S0zEnlGBnLEnr8DgoDJS3GTecxH7nZr2X01kHo6rxrOGa";
+const OFFER_HASH = "pdkhijtoed";
+const WEBHOOK_SECRET = "seu-token-secreto-aqui-mude-para-uma-chave-forte";
 const API_BASE = "https://api.plumify.com.br/api/public/v1";
 
 const isConfigured = !!API_TOKEN && !!OFFER_HASH;
@@ -59,8 +62,6 @@ async function callPlumify(payload) {
   }
 
   if (!response.ok) {
-    // Loga a resposta crua para facilitar diagnóstico caso algum campo do
-    // payload não bata com o que a Plumify espera (ex: nome de atributo do cartão).
     console.error("Plumify respondeu com erro:", response.status, JSON.stringify(data));
     const message = (data && (data.message || data.error)) || "Erro ao comunicar com a Plumify.";
     throw new Error(message);
@@ -112,19 +113,6 @@ async function createPixTransaction({
 
 /**
  * Cria uma transação de cartão de crédito na Plumify.
- *
- * IMPORTANTE: não consegui acessar a documentação de cartão da Plumify
- * (docs.plumify.com.br é renderizada via JS e não retornou conteúdo
- * indexável no momento desta integração) — o payload de Pix acima veio de
- * um projeto de referência seu. O bloco `card` abaixo segue o padrão mais
- * comum usado por gateways com esse mesmo formato de payload (offer_hash /
- * cart / postback_url). Antes de usar em produção:
- *   1. Confirme os nomes exatos dos campos do cartão no painel/documentação
- *      da sua conta Plumify (Configurações > API ou Central de Ajuda).
- *   2. Faça um teste com um cartão de teste, se a Plumify oferecer sandbox.
- *   3. Se algum campo estiver errado, o erro cru retornado pela API fica
- *      registrado no log do servidor (console.error em callPlumify) para
- *      facilitar o ajuste rápido.
  */
 async function createCreditCardTransaction({
   amountInReais,
@@ -135,7 +123,7 @@ async function createCreditCardTransaction({
   customerCpf,
   address,
   postbackUrl,
-  card, // { number, holderName, expirationMonth, expirationYear, cvv }
+  card,
   installments,
 }) {
   if (!isConfigured) throw new Error("PLUMIFY_NOT_CONFIGURED");
