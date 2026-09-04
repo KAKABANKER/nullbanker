@@ -4,6 +4,27 @@ const { requireAdmin } = require("../middleware/auth");
 
 const router = express.Router();
 
+function getClientIp(req) {
+  return (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "";
+}
+
+async function logAction(req, action, { targetType, targetId, detail } = {}) {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        adminId: req.user ? req.user.id : null,
+        action,
+        targetType: targetType || null,
+        targetId: targetId !== undefined && targetId !== null ? String(targetId) : null,
+        detail: detail || undefined,
+        ip: getClientIp(req),
+      },
+    });
+  } catch (err) {
+    console.error("Não foi possível gravar o log de auditoria:", err);
+  }
+}
+
 function slugify(text) {
   return text
     .toString()
@@ -81,6 +102,7 @@ router.post("/", requireAdmin, async (req, res) => {
         features: Array.isArray(features) ? features : [],
       },
     });
+    await logAction(req, "product.create", { targetType: "Product", targetId: product.id, detail: { name } });
     res.status(201).json({ product });
   } catch (err) {
     console.error("Erro ao criar produto:", err);
@@ -106,6 +128,7 @@ router.put("/:id", requireAdmin, async (req, res) => {
         ...(active !== undefined ? { active: Boolean(active) } : {}),
       },
     });
+    await logAction(req, "product.update", { targetType: "Product", targetId: id });
     res.json({ product });
   } catch (err) {
     console.error("Erro ao editar produto:", err);
@@ -118,6 +141,7 @@ router.delete("/:id", requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
     await prisma.product.delete({ where: { id } });
+    await logAction(req, "product.delete", { targetType: "Product", targetId: id });
     res.json({ ok: true });
   } catch (err) {
     console.error("Erro ao remover produto:", err);

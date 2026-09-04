@@ -33,6 +33,8 @@ router.post("/", optionalAuth, async (req, res) => {
       customerPhone,
       cpf,
       address,
+      card,
+      installments,
     } = req.body;
 
     if (!productId || !paymentMethod || !customerName || !customerEmail) {
@@ -47,7 +49,11 @@ router.post("/", optionalAuth, async (req, res) => {
       return res.status(404).json({ error: "Produto não encontrado." });
     }
 
-    const pixGateway = plumify.isConfigured ? "plumify" : "mercadopago";
+    const gatewayName = plumify.isConfigured
+      ? "plumify"
+      : paymentMethod === "credit_card"
+      ? "stripe"
+      : "mercadopago";
 
     const order = await prisma.order.create({
       data: {
@@ -58,15 +64,65 @@ router.post("/", optionalAuth, async (req, res) => {
         paymentMethod,
         amount: product.price,
         status: "pending",
-        gateway: paymentMethod === "credit_card" ? "stripe" : pixGateway,
+        gateway: gatewayName,
       },
     });
 
+    // ---------- Cartão de crédito ----------
     if (paymentMethod === "credit_card") {
+      // Plumify tem prioridade quando configurada; Stripe fica como
+      // alternativa apenas enquanto a Plumify não estiver configurada.
+      if (plumify.isConfigured) {
+        if (!address || !address.street || !address.number || !address.neighborhood || !address.city || !address.state || !address.zipCode) {
+          return res.status(400).json({
+            error: "Preencha o endereço completo (rua, número, bairro, cidade, estado e CEP) para pagar com cartão.",
+          });
+        }
+        if (!cpf) {
+          return res.status(400).json({ error: "Informe o CPF para pagar com cartão." });
+        }
+        if (!card || !card.number || !card.cvv || !card.expirationMonth || !card.expirationYear || !card.holderName) {
+          return res.status(400).json({ error: "Preencha todos os dados do cartão." });
+        }
+
+        try {
+          const result = await plumify.createCreditCardTransaction({
+            amountInReais: product.price,
+            title: product.name,
+            customerName,
+            customerEmail,
+            customerPhone: customerPhone || "",
+            customerCpf: cpf,
+            address,
+            card,
+            installments,
+            postbackUrl: `${APP_URL}/api/webhooks/plumify`,
+          });
+
+          const updated = await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              gatewayPaymentId: result.hash,
+              status: result.status,
+              cardLast4: result.cardLast4,
+              cardBrand: result.cardBrand,
+            },
+          });
+
+          return res.status(201).json({ order: updated });
+        } catch (cardErr) {
+          console.error("Erro ao cobrar cartão via Plumify:", cardErr);
+          await prisma.order.update({ where: { id: order.id }, data: { status: "failed" } });
+          return res.status(402).json({
+            error: cardErr.message || "Não foi possível processar o pagamento com este cartão.",
+          });
+        }
+      }
+
       if (!stripe) {
         return res.status(503).json({
           error:
-            "Pagamento por cartão ainda não configurado. Defina STRIPE_SECRET_KEY no servidor.",
+            "Pagamento por cartão ainda não configurado. Defina PLUMIFY_API_TOKEN (ou STRIPE_SECRET_KEY) no servidor.",
         });
       }
       const session = await stripe.checkout.sessions.create({
@@ -100,6 +156,7 @@ router.post("/", optionalAuth, async (req, res) => {
     }
 
     // ---------- PIX ----------
+    const pixGateway = gatewayName;
 
     if (pixGateway === "plumify") {
       if (!address || !address.street || !address.number || !address.neighborhood || !address.city || !address.state || !address.zipCode) {

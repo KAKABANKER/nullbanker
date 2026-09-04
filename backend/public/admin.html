@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Painel — NULLBANKER</title>
-<link rel="icon" href="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" />
+<link rel="icon" href="/img/logo.svg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body class="admin-page">
 
 <div class="admin-shell" id="adminShell" style="display:none;">
   <aside class="admin-side">
-    <div class="logo"><img src="https://i.pinimg.com/736x/db/bb/7d/dbbb7ddd2c0c0f076161eadb5dda0b7d.jpg" alt="NULLBANKER" />NULLBANKER</div>
+    <div class="logo"><img src="/img/logo.svg" alt="NULLBANKER" />NULLBANKER</div>
     <nav>
       <a href="#" data-tab="dashboard" class="active">Dashboard</a>
       <a href="#" data-tab="orders">Pedidos</a>
@@ -19,6 +19,7 @@
       <a href="#" data-tab="webhooks">Webhooks</a>
       <a href="#" data-tab="products">Produtos</a>
       <a href="#" data-tab="users">Usuários</a>
+      <a href="#" data-tab="audit">Auditoria</a>
       <a href="#" data-tab="settings">Configurações</a>
       <a href="/">Voltar ao site</a>
       <a href="#" id="logoutBtn">Sair</a>
@@ -37,9 +38,12 @@
       <div class="stat-grid">
         <div class="stat-cell"><div class="label">RECEITA (pago)</div><div class="value" id="statRevenue">—</div></div>
         <div class="stat-cell"><div class="label">PEDIDOS</div><div class="value" id="statOrders">—</div></div>
+        <div class="stat-cell"><div class="label">PENDENTES</div><div class="value" id="statPending">—</div></div>
         <div class="stat-cell"><div class="label">VISITANTES (30d)</div><div class="value" id="statVisits">—</div></div>
         <div class="stat-cell"><div class="label">PRODUTOS</div><div class="value" id="statProducts">—</div></div>
       </div>
+      <h3>Receita — últimos 30 dias</h3>
+      <div id="revenueChart" class="bar-chart"><div class="empty-state">carregando...</div></div>
       <h3>Últimos pedidos</h3>
       <div id="dashboardOrders"><div class="empty-state">carregando...</div></div>
     </div>
@@ -51,6 +55,10 @@
         <button data-status="pending">Pendentes</button>
         <button data-status="failed">Falhos</button>
       </div>
+      <div class="admin-toolbar">
+        <input type="text" id="orderSearchInput" placeholder="Buscar por cliente, e-mail ou ID da transação..." />
+        <a href="#" id="exportOrdersBtn" class="btn btn-outline">Exportar CSV</a>
+      </div>
       <div id="ordersTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
@@ -59,7 +67,7 @@
     </div>
 
     <div id="tab-webhooks" class="tab-panel" style="display:none;">
-      <p class="helper" style="margin-top:0;">Eventos brutos recebidos das gateways de pagamento (Stripe e Mercado Pago).</p>
+      <p class="helper" style="margin-top:0;">Eventos brutos recebidos das gateways de pagamento (Plumify, e Stripe/Mercado Pago quando usados como alternativa).</p>
       <div id="webhooksTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
@@ -97,7 +105,15 @@
     </div>
 
     <div id="tab-users" class="tab-panel" style="display:none;">
+      <div class="admin-toolbar">
+        <input type="text" id="userSearchInput" placeholder="Buscar por nome ou e-mail..." />
+      </div>
       <div id="usersTableWrap"><div class="empty-state">carregando...</div></div>
+    </div>
+
+    <div id="tab-audit" class="tab-panel" style="display:none;">
+      <p class="helper" style="margin-top:0;">Ações administrativas sensíveis: quem fez, o quê, quando e de qual IP.</p>
+      <div id="auditTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
     <div id="tab-settings" class="tab-panel" style="display:none;">
@@ -223,7 +239,7 @@
   const tabs = document.querySelectorAll("[data-tab]");
   const titles = {
     dashboard: "Dashboard", orders: "Pedidos", visits: "Visitantes",
-    webhooks: "Webhooks", products: "Produtos", users: "Usuários", settings: "Configurações",
+    webhooks: "Webhooks", products: "Produtos", users: "Usuários", audit: "Auditoria", settings: "Configurações",
   };
 
   tabs.forEach((tab) => {
@@ -246,6 +262,7 @@
     if (name === "webhooks") loadWebhooks();
     if (name === "products") loadProducts();
     if (name === "users") loadUsers();
+    if (name === "audit") loadAuditLog();
     if (name === "settings") loadSettings();
   }
 
@@ -255,6 +272,7 @@
       const stats = await API.get("/admin/stats");
       document.getElementById("statRevenue").textContent = formatBRL(stats.revenue);
       document.getElementById("statOrders").textContent = `${stats.paidOrders}/${stats.totalOrders}`;
+      document.getElementById("statPending").textContent = stats.pendingOrders;
       document.getElementById("statVisits").textContent = stats.recentVisits;
       document.getElementById("statProducts").textContent = stats.totalProducts;
 
@@ -263,8 +281,31 @@
       document.getElementById("dashboardOrders").innerHTML = recent.length
         ? renderOrdersTable(recent)
         : `<div class="empty-state">Nenhum pedido ainda.</div>`;
+      bindStatusSelects(document.getElementById("dashboardOrders"));
+
+      loadRevenueChart();
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  async function loadRevenueChart() {
+    const box = document.getElementById("revenueChart");
+    try {
+      const { days } = await API.get("/admin/stats/revenue-daily");
+      const max = Math.max(1, ...days.map((d) => d.total));
+      box.innerHTML = days
+        .map((d) => {
+          const heightPct = Math.round((d.total / max) * 100);
+          const label = new Date(d.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+          return `<div class="bar-col" title="${label}: ${formatBRL(d.total)}">
+            <div class="bar-fill" style="height:${d.total > 0 ? Math.max(heightPct, 4) : 0}%"></div>
+            <span class="bar-label">${label.slice(0, 2)}</span>
+          </div>`;
+        })
+        .join("");
+    } catch (e) {
+      box.innerHTML = `<div class="empty-state">Não foi possível carregar o gráfico.</div>`;
     }
   }
 
@@ -312,17 +353,46 @@
 
   // ---------- Orders tab ----------
   let currentOrderFilter = "";
+  let currentOrderSearch = "";
+
+  function ordersQuery() {
+    const params = new URLSearchParams();
+    if (currentOrderFilter) params.set("status", currentOrderFilter);
+    if (currentOrderSearch) params.set("q", currentOrderSearch);
+    const qs = params.toString();
+    return qs ? `?${qs}` : "";
+  }
+
   async function loadOrders() {
     const wrap = document.getElementById("ordersTableWrap");
     try {
-      const query = currentOrderFilter ? `?status=${currentOrderFilter}` : "";
-      const { orders } = await API.get(`/admin/orders${query}`);
+      const { orders } = await API.get(`/admin/orders${ordersQuery()}`);
       wrap.innerHTML = orders.length ? renderOrdersTable(orders) : `<div class="empty-state">Nenhum pedido encontrado.</div>`;
       bindStatusSelects(wrap);
     } catch (e) {
       wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os pedidos.</div>`;
     }
   }
+
+  let orderSearchTimeout;
+  document.getElementById("orderSearchInput").addEventListener("input", (e) => {
+    clearTimeout(orderSearchTimeout);
+    orderSearchTimeout = setTimeout(() => {
+      currentOrderSearch = e.target.value.trim();
+      loadOrders();
+    }, 300);
+  });
+
+  document.getElementById("exportOrdersBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (currentOrderFilter) params.set("status", currentOrderFilter);
+    if (currentOrderSearch) params.set("q", currentOrderSearch);
+    const qs = params.toString();
+    // A navegação usa o cookie httpOnly de sessão (já enviado automaticamente
+    // pelo navegador), então não é preciso — e não é seguro — colocar o token na URL.
+    window.open(`/api/admin/orders/export${qs ? `?${qs}` : ""}`, "_blank");
+  });
 
   document.querySelectorAll("#orderFilterTabs button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -525,21 +595,28 @@
   });
 
   // ---------- Users tab ----------
+  let currentUserSearch = "";
+
   async function loadUsers() {
     const wrap = document.getElementById("usersTableWrap");
     try {
-      const { users } = await API.get("/admin/users");
+      const qs = currentUserSearch ? `?q=${encodeURIComponent(currentUserSearch)}` : "";
+      const { users } = await API.get(`/admin/users${qs}`);
       const me = API.user();
       wrap.innerHTML = users.length
-        ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Admin</th><th>Pedidos</th><th>Desde</th><th></th></tr></thead>
+        ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Admin</th><th>Pedidos</th><th>Último login</th><th>Desde</th><th></th></tr></thead>
            <tbody>${users
-             .map(
-               (u) => `<tr>
+             .map((u) => {
+               const locked = u.lockedUntil && new Date(u.lockedUntil) > new Date();
+               return `<tr>
                 <td>${u.name}</td>
                 <td>${u.email}</td>
                 <td>${u.phone || "—"}</td>
                 <td>${u.isAdmin ? "Sim" : "Não"}</td>
                 <td>${u._count ? u._count.orders : 0}</td>
+                <td>${u.lastLoginAt ? `${formatDate(u.lastLoginAt)}<br /><span class="helper" style="margin:0;">${u.lastLoginIp || "—"}</span>` : "nunca"}${
+                  locked ? `<br /><span class="badge failed">bloqueado</span>` : ""
+                }</td>
                 <td>${formatDate(u.createdAt)}</td>
                 <td style="white-space:nowrap;">
                   <div class="row-actions">
@@ -550,6 +627,7 @@
                         : ""
                     }
                     <a class="btn btn-outline" href="mailto:${u.email}">E-mail</a>
+                    ${locked ? `<button class="btn btn-outline unlockUserBtn" data-id="${u.id}" data-name="${u.name}">Desbloquear</button>` : ""}
                     ${
                       me && u.id === me.id
                         ? ""
@@ -559,13 +637,25 @@
                     }
                   </div>
                 </td>
-              </tr>`
-             )
+              </tr>`;
+             })
              .join("")}</tbody></table>`
-        : `<div class="empty-state">Nenhum usuário cadastrado.</div>`;
+        : `<div class="empty-state">Nenhum usuário encontrado.</div>`;
 
       wrap.querySelectorAll(".viewUserOrdersBtn").forEach((btn) =>
         btn.addEventListener("click", () => openUserOrdersModal(btn.dataset.id, btn.dataset.name))
+      );
+
+      wrap.querySelectorAll(".unlockUserBtn").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          if (!confirm(`Desbloquear o login de ${btn.dataset.name}?`)) return;
+          try {
+            await API.put(`/admin/users/${btn.dataset.id}/unlock`, {});
+            loadUsers();
+          } catch (e) {
+            alert(e.message || "Não foi possível desbloquear esta conta.");
+          }
+        })
       );
 
       wrap.querySelectorAll(".toggleAdminBtn").forEach((btn) =>
@@ -612,6 +702,39 @@
       );
     } catch (e) {
       wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os usuários.</div>`;
+    }
+  }
+
+  let userSearchTimeout;
+  document.getElementById("userSearchInput").addEventListener("input", (e) => {
+    clearTimeout(userSearchTimeout);
+    userSearchTimeout = setTimeout(() => {
+      currentUserSearch = e.target.value.trim();
+      loadUsers();
+    }, 300);
+  });
+
+  // ---------- Audit log tab ----------
+  async function loadAuditLog() {
+    const wrap = document.getElementById("auditTableWrap");
+    try {
+      const { logs } = await API.get("/admin/audit-log");
+      wrap.innerHTML = logs.length
+        ? `<table class="admin-table"><thead><tr><th>Admin</th><th>Ação</th><th>Alvo</th><th>IP</th><th>Data</th></tr></thead>
+           <tbody>${logs
+             .map(
+               (l) => `<tr>
+                <td>${l.admin ? l.admin.name : "—"}</td>
+                <td><code>${l.action}</code></td>
+                <td>${l.targetType ? `${l.targetType}${l.targetId ? ` #${l.targetId}` : ""}` : "—"}</td>
+                <td>${l.ip || "—"}</td>
+                <td>${formatDate(l.createdAt)}</td>
+              </tr>`
+             )
+             .join("")}</tbody></table>`
+        : `<div class="empty-state">Nenhuma ação registrada ainda.</div>`;
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar o log de auditoria.</div>`;
     }
   }
 

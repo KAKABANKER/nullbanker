@@ -488,6 +488,50 @@ footer {
   font-size: 32px;
 }
 
+/* ---------- Admin: toolbar de busca/exportação ---------- */
+.admin-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.admin-toolbar input[type="text"] {
+  flex: 1;
+  max-width: 360px;
+  margin-bottom: 0;
+}
+
+/* ---------- Admin: gráfico de receita (barras simples em CSS) ---------- */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 140px;
+  padding: 12px 0 4px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.bar-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+.bar-fill {
+  width: 100%;
+  background: var(--black);
+  min-height: 0;
+  transition: height 0.3s ease;
+}
+.bar-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--grey);
+}
+
 table.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.admin-table th {
   text-align: left;
@@ -1012,6 +1056,17 @@ body.admin-page .tabs button { color: #9a9a95; }
 body.admin-page .badge { border-color: #444; color: #ccc; }
 body.admin-page .badge.paid { background: #fff; color: #000; }
 body.admin-page .badge.failed, body.admin-page .badge.cancelled { color: #666; }
+body.admin-page .bar-chart { border-bottom-color: #2a2a2a; }
+body.admin-page .bar-fill { background: #fff; }
+body.admin-page .bar-label { color: #7a7a76; }
+body.admin-page code {
+  background: #1c1c1c;
+  color: #eaeaea;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
 
 /* Mensagens */
 body.admin-page .msg.error { border-color: #d64545; color: #ff8a8a; background: rgba(214,69,69,0.08); }
@@ -1064,6 +1119,54 @@ body.admin-page .spinner-line { color: #7a7a76; }
 }
 .diff-item h4 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0 0 4px; }
 .diff-item p { font-size: 14px; color: var(--grey-dark); margin: 0; }
+
+/* ---------- Segurança (trust grid) ---------- */
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 48px;
+}
+@media (max-width: 700px) { .trust-grid { grid-template-columns: 1fr; gap: 20px; } }
+.trust-item { display: flex; gap: 16px; align-items: flex-start; }
+.trust-mark {
+  font-family: var(--mono);
+  font-size: 14px;
+  width: 30px; height: 30px;
+  background: var(--black);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.trust-item h4 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0 0 4px; }
+.trust-item p { font-size: 14px; color: var(--grey-dark); margin: 0; }
+
+/* ---------- Depoimentos ---------- */
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) { .testimonial-grid { grid-template-columns: 1fr; } }
+.testimonial-card {
+  background: var(--white);
+  padding: 28px 26px;
+  border-top: 2px solid var(--black);
+}
+.testimonial-card p {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.testimonial-author {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--grey);
+}
 
 /* ---------- FAQ ---------- */
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const { prisma } = require("../db");
+const plumify = require("../services/plumify");
 
 const router = express.Router();
 
@@ -114,6 +115,15 @@ router.post("/mercadopago", async (req, res) => {
 // POST /api/webhooks/plumify
 router.post("/plumify", async (req, res) => {
   try {
+    // Se PLUMIFY_WEBHOOK_SECRET estiver configurado, exige o token próprio
+    // que anexamos na postback_url ao criar a transação (services/plumify.js).
+    // Isso impede que alguém forje uma confirmação de pagamento chamando
+    // esse endpoint diretamente sem conhecer o segredo.
+    if (!plumify.verifyWebhookToken(req.query.wt)) {
+      console.warn("Webhook Plumify recebido com token inválido ou ausente.");
+      return res.status(401).json({ error: "Token inválido." });
+    }
+
     const { hash, status } = req.body || {};
 
     await prisma.webhookLog.create({

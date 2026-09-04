@@ -6,8 +6,15 @@ const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutos
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getClientIp(req) {
+  return (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "";
 }
 
 function signToken(user) {
@@ -70,8 +77,43 @@ router.post("/login", async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ error: "Credenciais inválidas." });
 
+    // Bloqueio temporário por tentativas de força bruta nesta conta,
+    // além do rate limit por IP já aplicado em /api/auth no server.js.
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      return res.status(423).json({
+        error: `Muitas tentativas incorretas. Tente novamente em ${minutesLeft} minuto(s).`,
+      });
+    }
+
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(401).json({ error: "Credenciais inválidas." });
+    if (!ok) {
+      const attempts = user.loginAttempts + 1;
+      const shouldLock = attempts >= MAX_LOGIN_ATTEMPTS;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          loginAttempts: shouldLock ? 0 : attempts,
+          lockedUntil: shouldLock ? new Date(Date.now() + LOCK_DURATION_MS) : null,
+        },
+      });
+      if (shouldLock) {
+        return res.status(423).json({
+          error: `Muitas tentativas incorretas. Conta bloqueada por ${LOCK_DURATION_MS / 60000} minutos.`,
+        });
+      }
+      return res.status(401).json({ error: "Credenciais inválidas." });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        loginAttempts: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date(),
+        lastLoginIp: getClientIp(req),
+      },
+    });
 
     const token = signToken(user);
     res

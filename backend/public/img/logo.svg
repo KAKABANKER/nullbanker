@@ -1,0 +1,6 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NULLBANKER">
+  <rect width="64" height="64" fill="#0a0a0a"/>
+  <text x="14" y="43" font-family="Georgia, 'Newsreader', serif" font-size="30" fill="#ffffff">N</text>
+  <path d="M46 18 L52 18 L52 46 L46 46" stroke="#ffffff" stroke-width="2" fill="none"/>
+  <rect x="46" y="30" width="3" height="3" fill="#ffffff"/>
+</svg>
