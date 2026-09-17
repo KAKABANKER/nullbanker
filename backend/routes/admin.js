@@ -426,4 +426,55 @@ router.put("/users/:id/unlock", async (req, res) => {
   }
 });
 
+// DELETE /api/admin/visits -> apaga todo o log de visitas
+router.delete("/visits", async (req, res) => {
+  try {
+    const result = await prisma.visit.deleteMany({});
+    await logAction(req, "visits.clear", { detail: { count: result.count } });
+    res.json({ ok: true, count: result.count });
+  } catch (err) {
+    console.error("Erro ao limpar visitas:", err);
+    res.status(500).json({ error: "Não foi possível limpar as visitas." });
+  }
+});
+
+// DELETE /api/admin/webhooks -> apaga todo o log de webhooks recebidos
+router.delete("/webhooks", async (req, res) => {
+  try {
+    const result = await prisma.webhookLog.deleteMany({});
+    await logAction(req, "webhooks.clear", { detail: { count: result.count } });
+    res.json({ ok: true, count: result.count });
+  } catch (err) {
+    console.error("Erro ao limpar webhooks:", err);
+    res.status(500).json({ error: "Não foi possível limpar os webhooks." });
+  }
+});
+
+// DELETE /api/admin/audit-log -> apaga o histórico de ações administrativas
+router.delete("/audit-log", async (req, res) => {
+  try {
+    const result = await prisma.auditLog.deleteMany({});
+    // Registrado depois de limpar: fica pelo menos 1 linha marcando que a limpeza aconteceu.
+    await logAction(req, "audit_log.clear", { detail: { count: result.count } });
+    res.json({ ok: true, count: result.count });
+  } catch (err) {
+    console.error("Erro ao limpar log de auditoria:", err);
+    res.status(500).json({ error: "Não foi possível limpar o log de auditoria." });
+  }
+});
+
+// DELETE /api/admin/orders/cleanup -> remove pedidos falhos/cancelados (nunca pagos ou pendentes)
+router.delete("/orders/cleanup", async (req, res) => {
+  try {
+    const result = await prisma.order.deleteMany({
+      where: { status: { in: ["failed", "cancelled"] } },
+    });
+    await logAction(req, "orders.cleanup_failed", { detail: { count: result.count } });
+    res.json({ ok: true, count: result.count });
+  } catch (err) {
+    console.error("Erro ao limpar pedidos falhos/cancelados:", err);
+    res.status(500).json({ error: "Não foi possível limpar esses pedidos." });
+  }
+});
+
 module.exports = router;

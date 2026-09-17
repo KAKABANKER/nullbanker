@@ -58,16 +58,23 @@
       <div class="admin-toolbar">
         <input type="text" id="orderSearchInput" placeholder="Buscar por cliente, e-mail ou ID da transação..." />
         <a href="#" id="exportOrdersBtn" class="btn btn-outline">Exportar CSV</a>
+        <button id="cleanupOrdersBtn" class="btn btn-danger">Limpar falhos/cancelados</button>
       </div>
       <div id="ordersTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
     <div id="tab-visits" class="tab-panel" style="display:none;">
+      <div class="admin-toolbar">
+        <button id="clearVisitsBtn" class="btn btn-danger">Limpar todas as visitas</button>
+      </div>
       <div id="visitsTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
     <div id="tab-webhooks" class="tab-panel" style="display:none;">
       <p class="helper" style="margin-top:0;">Eventos brutos recebidos das gateways de pagamento (Plumify, e Stripe/Mercado Pago quando usados como alternativa).</p>
+      <div class="admin-toolbar">
+        <button id="clearWebhooksBtn" class="btn btn-danger">Limpar log de webhooks</button>
+      </div>
       <div id="webhooksTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
@@ -113,6 +120,9 @@
 
     <div id="tab-audit" class="tab-panel" style="display:none;">
       <p class="helper" style="margin-top:0;">Ações administrativas sensíveis: quem fez, o quê, quando e de qual IP.</p>
+      <div class="admin-toolbar">
+        <button id="clearAuditBtn" class="btn btn-danger">Limpar log de auditoria</button>
+      </div>
       <div id="auditTableWrap"><div class="empty-state">carregando...</div></div>
     </div>
 
@@ -403,6 +413,17 @@
     });
   });
 
+  document.getElementById("cleanupOrdersBtn").addEventListener("click", async () => {
+    if (!confirm("Isso vai apagar permanentemente todos os pedidos com status Falhou ou Cancelado (pedidos pagos e pendentes nunca são afetados). Continuar?")) return;
+    try {
+      const result = await API.del("/admin/orders/cleanup");
+      alert(`${result.count} pedido(s) removido(s).`);
+      loadOrders();
+    } catch (e) {
+      alert(e.message || "Não foi possível limpar os pedidos.");
+    }
+  });
+
   // ---------- Visits tab ----------
   async function loadVisits() {
     const wrap = document.getElementById("visitsTableWrap");
@@ -418,6 +439,17 @@
       wrap.innerHTML = `<div class="empty-state">Não foi possível carregar as visitas.</div>`;
     }
   }
+
+  document.getElementById("clearVisitsBtn").addEventListener("click", async () => {
+    if (!confirm("Isso vai apagar permanentemente todo o histórico de visitas. Continuar?")) return;
+    try {
+      const result = await API.del("/admin/visits");
+      alert(`${result.count} registro(s) de visita removido(s).`);
+      loadVisits();
+    } catch (e) {
+      alert(e.message || "Não foi possível limpar as visitas.");
+    }
+  });
 
   // ---------- Webhooks tab ----------
   async function loadWebhooks() {
@@ -437,6 +469,17 @@
       wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os webhooks.</div>`;
     }
   }
+
+  document.getElementById("clearWebhooksBtn").addEventListener("click", async () => {
+    if (!confirm("Isso vai apagar permanentemente todo o log de webhooks recebidos. Continuar?")) return;
+    try {
+      const result = await API.del("/admin/webhooks");
+      alert(`${result.count} registro(s) de webhook removido(s).`);
+      loadWebhooks();
+    } catch (e) {
+      alert(e.message || "Não foi possível limpar os webhooks.");
+    }
+  });
 
   // ---------- Products tab ----------
   async function loadProducts() {
@@ -737,6 +780,17 @@
       wrap.innerHTML = `<div class="empty-state">Não foi possível carregar o log de auditoria.</div>`;
     }
   }
+
+  document.getElementById("clearAuditBtn").addEventListener("click", async () => {
+    if (!confirm("Isso vai apagar permanentemente todo o log de auditoria. Continuar?")) return;
+    try {
+      const result = await API.del("/admin/audit-log");
+      alert(`${result.count} registro(s) de auditoria removido(s).`);
+      loadAuditLog();
+    } catch (e) {
+      alert(e.message || "Não foi possível limpar o log de auditoria.");
+    }
+  });
 
   // ---------- User orders modal ----------
   async function openUserOrdersModal(userId, userName) {

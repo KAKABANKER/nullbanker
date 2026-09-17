@@ -494,6 +494,7 @@ footer {
   gap: 12px;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 .admin-toolbar input[type="text"] {
   flex: 1;
