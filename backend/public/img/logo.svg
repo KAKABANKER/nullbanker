@@ -1,6 +1,16 @@
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NULLBANKER">
-  <rect width="64" height="64" fill="#0a0a0a"/>
-  <text x="14" y="43" font-family="Georgia, 'Newsreader', serif" font-size="30" fill="#ffffff">N</text>
-  <path d="M46 18 L52 18 L52 46 L46 46" stroke="#ffffff" stroke-width="2" fill="none"/>
-  <rect x="46" y="30" width="3" height="3" fill="#ffffff"/>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8cf8f"/><stop offset="0.55" stop-color="#c9a45c"/><stop offset="1" stop-color="#8f7237"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="31" fill="#0b0908"/>
+  <circle cx="32" cy="32" r="29.5" fill="none" stroke="url(#g)" stroke-width="1.6"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="url(#g)" stroke-width="0.7"/>
+  <!-- N (estilo didone: hastes finas e diagonal grossa) -->
+  <g fill="url(#g)">
+    <path d="M17 19h9l-1 2.2h-2.2v21.6H25L26 45H17l1-2.2h2.2V21.2H18z"/>
+    <path d="M22.6 19h4.4l14.4 20.6V21.2H39L40 19h8l-1 2.2h-2.2V45H40L25.8 24.4z"/>
+  </g>
+  <path d="M32 6.5l1 2.2 2.3.3-1.7 1.6.4 2.3-2-1.2-2 1.2.4-2.3-1.7-1.6 2.3-.3z" fill="url(#g)" transform="translate(0 -1) scale(1)"/>
 </svg>

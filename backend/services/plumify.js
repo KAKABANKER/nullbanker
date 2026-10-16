@@ -1,11 +1,21 @@
 const crypto = require("crypto");
 
 // ============================================
-// CREDENCIAIS PLUMIFY - CONFIGURADAS DIRETAMENTE
+// CREDENCIAIS PLUMIFY — SEMPRE VIA VARIÁVEIS DE AMBIENTE
+// Nunca coloque token/hash direto no código: o repositório é versionado
+// e qualquer pessoa com acesso ao código passaria a ter acesso à conta.
+//   PLUMIFY_API_TOKEN       token da API (painel da Plumify)
+//   PLUMIFY_OFFER_HASH      hash da oferta/produto
+//   PLUMIFY_WEBHOOK_SECRET  (opcional) segredo do webhook; se ausente, é
+//                           derivado automaticamente do JWT_SECRET
 // ============================================
-const API_TOKEN = "0RRWtMOuHsAQlR7S0zEnlGBnLEnr8DgoDJS3GTecxH7nZr2X01kHo6rxrOGa";
-const OFFER_HASH = "pdkhijtoed";
-const WEBHOOK_SECRET = "seu-token-secreto-aqui-mude-para-uma-chave-forte";
+const API_TOKEN = process.env.PLUMIFY_API_TOKEN || "";
+const OFFER_HASH = process.env.PLUMIFY_OFFER_HASH || "";
+const WEBHOOK_SECRET =
+  process.env.PLUMIFY_WEBHOOK_SECRET ||
+  (process.env.JWT_SECRET
+    ? crypto.createHmac("sha256", process.env.JWT_SECRET).update("plumify-webhook").digest("hex")
+    : "");
 const API_BASE = "https://api.plumify.com.br/api/public/v1";
 
 const isConfigured = !!API_TOKEN && !!OFFER_HASH;
@@ -24,7 +34,8 @@ function signedPostbackUrl(postbackUrl) {
 }
 
 function verifyWebhookToken(token) {
-  if (!WEBHOOK_SECRET) return true; // nenhum segredo configurado ainda: não bloqueia
+  // Falha fechada: sem segredo (ou sem token na requisição) nada é aceito.
+  if (!WEBHOOK_SECRET) return false;
   if (!token) return false;
   const a = Buffer.from(String(token));
   const b = Buffer.from(String(WEBHOOK_SECRET));
@@ -138,7 +149,7 @@ async function createCreditCardTransaction({
     amount: amountCents,
     offer_hash: OFFER_HASH,
     payment_method: "credit_card",
-    installments: Math.max(1, Number(installments) || 1),
+    installments: Math.min(12, Math.max(1, Math.floor(Number(installments)) || 1)),
     customer: buildCustomer({ customerName, customerEmail, customerPhone, customerCpf, address }),
     cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1 }],
     card: {

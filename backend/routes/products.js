@@ -98,7 +98,7 @@ router.post("/", requireAdmin, async (req, res) => {
         description,
         price: Number(price),
         imageUrl: imageUrl || null,
-        // images: Array.isArray(images) ? images : [],  // <--- COMENTADO
+        images: Array.isArray(images) ? images.filter(Boolean).slice(0, 12) : [],
         features: Array.isArray(features) ? features : [],
       },
     });
@@ -123,7 +123,7 @@ router.put("/:id", requireAdmin, async (req, res) => {
         ...(description !== undefined ? { description } : {}),
         ...(price !== undefined ? { price: Number(price) } : {}),
         ...(imageUrl !== undefined ? { imageUrl } : {}),
-        // ...(images !== undefined ? { images: Array.isArray(images) ? images : [] } : {}), // <--- COMENTADO
+        ...(images !== undefined ? { images: Array.isArray(images) ? images.filter(Boolean).slice(0, 12) : [] } : {}),
         ...(features !== undefined ? { features } : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
       },
@@ -137,12 +137,20 @@ router.put("/:id", requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/products/:id -> remover (admin)
+// Produto que já tem pedidos não pode ser apagado (o histórico de vendas
+// depende dele): nesse caso ele é apenas desativado e some da loja.
 router.delete("/:id", requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const orderCount = await prisma.order.count({ where: { productId: id } });
+    if (orderCount > 0) {
+      await prisma.product.update({ where: { id }, data: { active: false } });
+      await logAction(req, "product.deactivate", { targetType: "Product", targetId: id, detail: { orders: orderCount } });
+      return res.json({ ok: true, deactivated: true, orders: orderCount });
+    }
     await prisma.product.delete({ where: { id } });
     await logAction(req, "product.delete", { targetType: "Product", targetId: id });
-    res.json({ ok: true });
+    res.json({ ok: true, deleted: true });
   } catch (err) {
     console.error("Erro ao remover produto:", err);
     res.status(500).json({ error: "Não foi possível remover o produto." });

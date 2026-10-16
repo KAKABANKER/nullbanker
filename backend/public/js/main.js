@@ -2,29 +2,41 @@ function initNav() {
   const toggle = document.querySelector(".navtoggle");
   const nav = document.querySelector("nav.mainnav");
   if (toggle && nav) {
-    toggle.addEventListener("click", () => nav.classList.toggle("open"));
+    toggle.addEventListener("click", () => {
+      const open = nav.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    // Fecha o menu ao tocar em um link (mobile)
+    nav.addEventListener("click", (e) => {
+      if (e.target.closest("a")) nav.classList.remove("open");
+    });
   }
 
   const authSlot = document.querySelector("[data-auth-slot]");
-  if (authSlot) {
-    const user = API.user();
-    if (user) {
-      authSlot.innerHTML = `
-        <a href="/minha-conta.html">${user.name.split(" ")[0]}</a>
-        <a href="#" id="logoutLink" class="btn-ghost-white">Sair</a>
-      `;
-      const logoutLink = document.getElementById("logoutLink");
-      logoutLink.addEventListener("click", (e) => {
-        e.preventDefault();
-        API.logout();
-      });
-    } else {
-      authSlot.innerHTML = `
-        <a href="/login.html">Entrar</a>
-        <a href="/registro.html" class="btn-ghost-white">Criar conta</a>
-      `;
-    }
+  if (!authSlot) return;
+
+  const user = API.user();
+  const html = user
+    ? `<a href="/minha-conta.html">${esc(String(user.name || "").split(" ")[0] || "Minha conta")}</a>
+       <a href="#" data-logout class="btn-ghost-white">Sair</a>`
+    : `<a href="/login.html">Entrar</a>
+       <a href="/registro.html" class="btn-ghost-white">Criar conta</a>`;
+  authSlot.innerHTML = html;
+
+  // No celular as ações de conta ficam dentro do menu aberto.
+  if (nav) {
+    const mobile = document.createElement("div");
+    mobile.className = "nav-auth-mobile";
+    mobile.innerHTML = html;
+    nav.appendChild(mobile);
   }
+
+  document.querySelectorAll("[data-logout]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      API.logout();
+    });
+  });
 }
 
 let siteConfig = {};
@@ -48,7 +60,10 @@ async function loadSupportLinks() {
     if (config.announcement) {
       const bar = document.createElement("div");
       bar.className = "announcement-bar";
-      bar.innerHTML = `<div class="wrap">${config.announcement}</div>`;
+      const inner = document.createElement("div");
+      inner.className = "wrap";
+      inner.textContent = config.announcement;
+      bar.appendChild(inner);
       document.body.prepend(bar);
     }
   } catch (e) {
@@ -57,7 +72,7 @@ async function loadSupportLinks() {
 }
 
 function initScrollAnimations() {
-  const targets = document.querySelectorAll("section > .wrap > *, .fade-in-up");
+  const targets = document.querySelectorAll("section:not(.hero) > .wrap > *, .fade-in-up");
   targets.forEach((el) => el.classList.add("fade-in-up"));
 
   if (!("IntersectionObserver" in window)) {

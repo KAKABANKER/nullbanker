@@ -148,3 +148,28 @@ Para hospedar a logo localmente (recomendado): salve o arquivo em
 - Tokens JWT assinados com segredo próprio (`JWT_SECRET`), expiram em 7 dias
 - Todas as consultas ao banco passam pelo Prisma (parametrizadas), sem risco de
   SQL injection por concatenação de string
+
+
+## Visual (tema "Casa de Negócios")
+
+- Todo o estilo está em `backend/public/css/style.css` (cores e fontes nas variáveis do `:root`).
+- Ilustrações originais em SVG em `backend/public/img/` (`crest.svg`, `fedora.svg`, `rose.svg`,
+  `ornament.svg`, `logo.svg`). Pode trocar qualquer uma mantendo o nome do arquivo.
+- Foto de fundo do topo da home: salve uma imagem como `backend/public/img/hero.jpg` e ela
+  aparece automaticamente (com camada escura por cima). Sem o arquivo, fica só o degradê.
+- Fotos de produto continuam sendo por link (URL) no painel admin.
+
+## Segurança — o que mudou nesta versão
+
+- **Credenciais da Plumify só por variável de ambiente** (`PLUMIFY_API_TOKEN`, `PLUMIFY_OFFER_HASH`).
+  Se algum token já foi commitado no repositório, ele deve ser considerado vazado: gere um novo
+  no painel da Plumify e configure no Render.
+- Webhooks (Plumify e Stripe) só são aceitos com segredo/assinatura válidos.
+- O painel escapa todo texto vindo de visitantes (nome, e-mail, user-agent, payload de webhook).
+- `requireAdmin` confere no banco se a conta ainda é admin a cada requisição.
+- "Sair" encerra a sessão no servidor (apaga o cookie), não só no navegador.
+
+## Migração desta versão
+
+Reativa a galeria de fotos dos produtos (`Product.images`). A migração é idempotente
+(`ADD COLUMN IF NOT EXISTS`) e roda sozinha no deploy (`npx prisma migrate deploy`).

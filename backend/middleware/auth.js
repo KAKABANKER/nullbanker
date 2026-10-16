@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { prisma } = require("../db");
 
 function getTokenFromReq(req) {
   const header = req.headers.authorization;
@@ -30,12 +31,23 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-function requireAdmin(req, res, next) {
-  requireAuth(req, res, () => {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: "Acesso restrito ao administrador." });
+// Confere no banco, a cada requisição, se a conta ainda existe e ainda é admin.
+// Só olhar o JWT deixaria um admin removido/excluído com acesso por até 7 dias.
+async function requireAdmin(req, res, next) {
+  requireAuth(req, res, async () => {
+    try {
+      const current = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { isAdmin: true },
+      });
+      if (!current || !current.isAdmin) {
+        return res.status(403).json({ error: "Acesso restrito ao administrador." });
+      }
+      next();
+    } catch (err) {
+      console.error("Erro ao validar admin:", err);
+      res.status(500).json({ error: "Não foi possível validar o acesso." });
     }
-    next();
   });
 }
 

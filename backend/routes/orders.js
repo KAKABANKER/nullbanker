@@ -244,14 +244,27 @@ router.post("/", optionalAuth, async (req, res) => {
 });
 
 // GET /api/orders/:id -> status do pedido (para a página de confirmação)
+// Público (o cliente pode não estar logado), então devolve só o necessário:
+// nada de e-mail, nome, ID da transação ou dados de cartão.
 router.get("/:id", async (req, res) => {
   try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(404).json({ error: "Pedido não encontrado." });
     const order = await prisma.order.findUnique({
-      where: { id: Number(req.params.id) },
-      include: { product: true },
+      where: { id },
+      include: { product: { select: { name: true } } },
     });
     if (!order) return res.status(404).json({ error: "Pedido não encontrado." });
-    res.json({ order });
+    res.json({
+      order: {
+        id: order.id,
+        status: order.status,
+        amount: order.amount,
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        product: { name: order.product ? order.product.name : "" },
+      },
+    });
   } catch (err) {
     console.error("Erro ao buscar pedido:", err);
     res.status(500).json({ error: "Não foi possível carregar o pedido." });

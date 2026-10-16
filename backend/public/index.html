@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NULLBANKER — Desenvolvimento de sites e sistemas sob medida</title>
-<meta name="description" content="NULLBANKER é uma empresa especializada em desenvolvimento de sites institucionais, lojas virtuais e sistemas sob medida, com código próprio e pagamento em cartão ou Pix." />
-<link rel="icon" href="https://imgs.search.brave.com/1tjIcG7QS4GFM5x_fXYEbZYTaql0KtcFons2y48HnKU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNTUv/MTMyLzIxMC9zbWFs/bC9hbm9ueW1vdXMt/bWFzay1mdXR1cmlz/dGljLWRlc2lnbi1k/aWdpdGFsLWFydC1m/cmVlLXBuZy5wbmc" />
+<title>NULLBANKER — Sites e sistemas sob medida</title>
+<meta name="description" content="A NULLBANKER desenvolve sites institucionais, lojas virtuais e sistemas sob medida, com código próprio, pagamento por cartão e Pix e suporte direto com quem programa." />
+<meta name="theme-color" content="#0b0908" />
+<link rel="icon" href="/img/logo.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <header class="topbar">
   <div class="wrap">
-    <a href="/" class="logo"><img src="https://imgs.search.brave.com/1tjIcG7QS4GFM5x_fXYEbZYTaql0KtcFons2y48HnKU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNTUv/MTMyLzIxMC9zbWFs/bC9hbm9ueW1vdXMt/bWFzay1mdXR1cmlz/dGljLWRlc2lnbi1k/aWdpdGFsLWFydC1m/cmVlLXBuZy5wbmc" alt="NULLBANKER" />NULLBANKER</a>
+    <a href="/" class="logo"><img src="/img/logo.svg" alt="" />NULLBANKER</a>
     <nav class="mainnav">
       <a href="/" class="active">Início</a>
       <a href="/produtos.html">Produtos</a>
@@ -22,78 +23,72 @@
       <a href="/login.html">Entrar</a>
       <a href="/registro.html" class="btn-ghost-white">Criar conta</a>
     </div>
-    <button class="navtoggle">menu</button>
+    <button class="navtoggle" type="button" aria-label="Abrir menu">Menu</button>
   </div>
 </header>
 
 <section class="hero">
   <div class="wrap hero-grid">
-    <div>
-      <div class="eyebrow-num">nuitbanker / empresa de desenvolvimento web</div>
-      <h1>Código próprio.<br />Sem templates genéricos.</h1>
-      <p class="lede">A NULLBANKER é especializada em desenvolvimento de sites e sistemas sob medida — tela fake sem burocracia, pagamento e painel próprio. Preço Baixo, Melhor do mercado!</p>
+    <div class="hero-copy">
+      <div class="eyebrow-num">Casa de negócios digitais</div>
+      <h1>Sites feitos com <em>respeito</em>, entregues com palavra.</h1>
+      <p class="lede">A NULLBANKER desenvolve sites institucionais, lojas virtuais e sistemas sob medida. Código próprio, pagamento por cartão e Pix e acompanhamento direto até o projeto ir ao ar.</p>
       <div class="hero-cta">
-        <a href="/produtos.html" class="btn btn-primary">Ver produtos</a>
-        <a href="/suporte.html" class="btn btn-outline">Falar antes de fechar</a>
+        <a href="/produtos.html" class="btn btn-primary">Ver os produtos</a>
+        <a href="/suporte.html" class="btn btn-outline">Falar com a casa</a>
       </div>
-      <div class="tech-row">
-        <span class="tech-tag">Node.js</span>
-        <span class="tech-tag">PostgreSQL</span>
-        <span class="tech-tag">Express</span>
-        <span class="tech-tag">JavaScript</span>
-        <span class="tech-tag">Pagamento seguro</span>
-        <span class="tech-tag">Pix</span>
+      <div class="hero-meta">
+        <span>Código próprio</span>
+        <span>Cartão e Pix</span>
+        <span>Suporte direto</span>
       </div>
     </div>
-    <div class="terminal">
-      <div class="terminal-bar">
-        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
-        <span class="terminal-title">nullbanker@server: ~/projeto.js</span>
-      </div>
-      <div class="terminal-body"><span class="c1">$</span> <span class="c2">nullbanker novo-projeto.js</span>
-<span class="c3">→ E-commerce...</span>
-<span class="c3">→ estrutura: institucional | loja | sistemas | api | DB </span>
-<span class="c3">→ System segure v!</span>
-<span class="c3">→ pagamento: cartão + Pix</span>
-<span class="c2">✓ Support via WhatsApp</span>
-<span class="c1">$</span> <span class="terminal-caret"></span></div>
+    <div class="hero-emblem">
+      <img src="/img/crest.svg" alt="Emblema da NULLBANKER" width="430" height="430" />
     </div>
   </div>
 </section>
 
-<section>
+<section id="casa">
   <div class="wrap about-grid">
     <div>
-      <div class="eyebrow-num">quem somos</div>
-      <h2>Uma empresa, não um freelancer avulso.</h2>
-      <p class="lede">A NULLBANKER nasceu para resolver um problema comum: sites feitos em construtor genérico que não escalam, não têm banco de dados de verdade e não têm quem dê manutenção depois. Aqui, cada projeto é desenvolvido com código próprio, por um time especializado, com processo, prazo e suporte definidos — não é um trabalho avulso.</p>
-      <p class="lede">Trabalhamos com stack moderna (Node.js, PostgreSQL, integrações reais de pagamento) e entregamos o projeto pronto para produção, com o código sob seu domínio.</p>
-    </div>
-    <div>
+      <div class="eyebrow-num">A casa</div>
+      <h2>Aqui, a palavra vale mais que o contrato.</h2>
+      <p class="lede">A NULLBANKER nasceu de um incômodo simples: sites feitos em construtor genérico, sem banco de dados de verdade e sem ninguém para responder depois da entrega.</p>
+      <p class="lede">Cada projeto é escrito sob medida pelo desenvolvedor responsável, em Node.js e PostgreSQL, com integração real de pagamento. Sem intermediário entre você e o código.</p>
       <div class="mini-stats">
-        <div class="mini-stat"><div class="value">100%</div><div class="label">CÓDIGO PRÓPRIO</div></div>
-        <div class="mini-stat"><div class="value">3–7d</div><div class="label">PRAZO MÉDIO</div></div>
-        <div class="mini-stat"><div class="value">2</div><div class="label">FORMAS DE PAGAMENTO</div></div>
-        <div class="mini-stat"><div class="value">24/7</div><div class="label">SUPORTE POR DISCORD E WHATSAPP</div></div>
+        <div class="mini-stat"><div class="value">100%</div><div class="label">Código próprio</div></div>
+        <div class="mini-stat"><div class="value">3–7 dias</div><div class="label">Prazo estimado</div></div>
+        <div class="mini-stat"><div class="value">2</div><div class="label">Formas de pagamento</div></div>
+        <div class="mini-stat"><div class="value">1</div><div class="label">Contato direto</div></div>
       </div>
     </div>
+    <figure class="house-art">
+      <img class="hat" src="/img/fedora.svg" alt="Chapéu fedora" />
+      <img class="rose" src="/img/rose.svg" alt="Rosa vermelha" />
+      <figcaption>Desde 2026</figcaption>
+    </figure>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="eyebrow-num">o que fazemos</div>
-    <h2>Três formas de tirar o projeto do papel</h2>
+    <div class="eyebrow-num">Os serviços</div>
+    <h2>Três propostas na mesa</h2>
+    <p class="lede">Escolha o formato que cabe no seu negócio. Todos saem com banco de dados, painel e suporte.</p>
     <div class="offer-grid mt-40">
       <div class="offer-card">
+        <span class="roman">I</span>
         <h3>Institucional</h3>
-        <p>Presença profissional, páginas de serviço, portfólio e contato — pensado para transmitir credibilidade.</p>
+        <p>O cartão de visita da sua marca: páginas de serviço, portfólio e contato, pensadas para passar credibilidade.</p>
       </div>
       <div class="offer-card">
+        <span class="roman">II</span>
         <h3>Loja virtual</h3>
-        <p>Catálogo, checkout com cartão e Pix, painel de pedidos — tudo integrado, sem plataforma de terceiros.</p>
+        <p>Catálogo, checkout com cartão e Pix e painel de pedidos, tudo integrado e sem plataforma de terceiros cobrando comissão.</p>
       </div>
       <div class="offer-card">
+        <span class="roman">III</span>
         <h3>Sistema sob medida</h3>
         <p>Painéis internos, automações e integrações específicas para o processo do seu negócio.</p>
       </div>
@@ -101,25 +96,34 @@
   </div>
 </section>
 
+<section class="section-wine quote-band">
+  <div class="wrap">
+    <div class="ornament"></div>
+    <blockquote>“Um bom negócio começa com uma boa palavra e termina com um bom aperto de mão.”</blockquote>
+    <cite>A casa NULLBANKER</cite>
+    <div class="ornament"></div>
+  </div>
+</section>
+
 <section>
   <div class="wrap">
-    <div class="eyebrow-num">diferenciais</div>
+    <div class="eyebrow-num">Regras da casa</div>
     <h2>Por que fechar com a NULLBANKER</h2>
     <div class="diff-grid">
       <div class="diff-item">
-        <span class="diff-mark">01</span>
+        <span class="diff-mark">I</span>
         <div><h4>Banco de dados de verdade</h4><p>PostgreSQL de produção, não uma planilha disfarçada de construtor de sites.</p></div>
       </div>
       <div class="diff-item">
-        <span class="diff-mark">02</span>
+        <span class="diff-mark">II</span>
         <div><h4>Painel administrativo incluso</h4><p>Você acompanha pedidos, clientes e configurações sem depender de terceiros.</p></div>
       </div>
       <div class="diff-item">
-        <span class="diff-mark">03</span>
-        <div><h4>Suporte direto com quem desenvolve</h4><p>Sem central de atendimento genérica — você fala com quem escreveu o código.</p></div>
+        <span class="diff-mark">III</span>
+        <div><h4>Fala com quem programa</h4><p>Sem central de atendimento genérica: o suporte é direto com o desenvolvedor do seu projeto.</p></div>
       </div>
       <div class="diff-item">
-        <span class="diff-mark">04</span>
+        <span class="diff-mark">IV</span>
         <div><h4>Sem mensalidade de plataforma</h4><p>O código é seu. Nada de ficar refém de assinatura de construtor de site.</p></div>
       </div>
     </div>
@@ -128,24 +132,71 @@
 
 <section>
   <div class="wrap">
-    <div class="eyebrow-num">segurança</div>
+    <div class="eyebrow-num">Como fechamos negócio</div>
+    <h2>Do pedido à entrega</h2>
+    <ul class="process-list">
+      <li><div><h4>Escolha o produto</h4><p>Veja os tipos de site e sistema disponíveis e o que cada um inclui na página de produtos.</p></div></li>
+      <li><div><h4>Feche o pedido</h4><p>Pagamento direto no site, em cartão de crédito ou Pix, sem intermediário.</p></div></li>
+      <li><div><h4>Acompanhe o desenvolvimento</h4><p>Suporte por Discord ou WhatsApp durante todo o processo, com atualizações de andamento.</p></div></li>
+      <li><div><h4>Receba o projeto no ar</h4><p>Site ou sistema publicado, com o código entregue sob o seu domínio.</p></div></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap two-col" style="align-items:center;">
+    <div>
+      <div class="eyebrow-num">Código próprio</div>
+      <h2>Escrito do zero, pensado para o seu negócio</h2>
+      <p class="lede">Nada de template genérico: a estrutura, o banco de dados e o painel nascem para o seu caso.</p>
+      <div class="tech-row">
+        <span class="tech-tag">Node.js</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">Express</span>
+        <span class="tech-tag">JavaScript</span>
+        <span class="tech-tag">Cartão</span>
+        <span class="tech-tag">Pix</span>
+      </div>
+    </div>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+        <span class="terminal-title">nullbanker@casa: ~/projeto</span>
+      </div>
+      <div class="terminal-body"><span class="c1">$</span> <span class="c2">nullbanker novo-projeto</span>
+<span class="c3">→ definindo o escopo com o cliente</span>
+<span class="c3">→ banco de dados PostgreSQL</span>
+<span class="c3">→ pagamento: cartão + Pix</span>
+<span class="c2">✓ projeto pronto para o ar</span>
+<span class="c1">$</span> <span class="terminal-caret"></span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow-num">Segurança</div>
     <h2>Seus dados e seu pagamento, protegidos</h2>
-    <div class="trust-grid mt-40">
+    <div class="trust-grid">
       <div class="trust-item">
-        <span class="trust-mark">✓</span>
-        <div><h4>Pagamento processado com criptografia</h4><p>Cartão e Pix processados por gateway especializado — seus dados de pagamento nunca ficam armazenados em texto puro nos nossos servidores.</p></div>
+        <span class="trust-mark">I</span>
+        <h4>Pagamento por gateway</h4>
+        <p>Cartão e Pix passam por gateway de pagamento. O site não guarda o número completo nem o código de segurança do cartão, só a bandeira e os 4 últimos dígitos.</p>
       </div>
       <div class="trust-item">
-        <span class="trust-mark">✓</span>
-        <div><h4>Senhas protegidas</h4><p>Toda senha de conta é armazenada com hash criptográfico (bcrypt) — nem a própria NULLBANKER consegue ver sua senha original.</p></div>
+        <span class="trust-mark">II</span>
+        <h4>Senhas protegidas</h4>
+        <p>Toda senha é guardada com hash criptográfico (bcrypt). Nem a própria casa consegue ver a sua senha.</p>
       </div>
       <div class="trust-item">
-        <span class="trust-mark">✓</span>
-        <div><h4>Conexão sempre criptografada</h4><p>Todo o site roda em HTTPS, com cabeçalhos de segurança contra os ataques mais comuns na web.</p></div>
+        <span class="trust-mark">III</span>
+        <h4>Conexão criptografada</h4>
+        <p>O site roda em HTTPS, com cabeçalhos de segurança contra os ataques mais comuns da web.</p>
       </div>
       <div class="trust-item">
-        <span class="trust-mark">✓</span>
-        <div><h4>Você fala com quem desenvolveu</h4><p>Sem central de atendimento terceirizada — suporte direto pelo Discord ou WhatsApp com o time responsável pelo seu projeto.</p></div>
+        <span class="trust-mark">IV</span>
+        <h4>Fala com quem desenvolveu</h4>
+        <p>Suporte direto pelo Discord ou WhatsApp com o desenvolvedor responsável pelo seu projeto.</p>
       </div>
     </div>
   </div>
@@ -153,63 +204,35 @@
 
 <section>
   <div class="wrap">
-    <div class="eyebrow-num">o que os clientes dizem</div>
-    <h2>Quem já fechou com a NULLBANKER</h2>
-    <div class="testimonial-grid mt-40">
-      <div class="testimonial-card">
-        <p>"Pedi um sistema com painel próprio e pagamento integrado. Recebi atualização em cada etapa e o projeto ficou no ar antes do prazo combinado."</p>
-        <div class="testimonial-author">— anon</div>
-      </div>
-      <div class="testimonial-card">
-        <p>"Diferente de construtor de site pronto, aqui o código é meu de verdade. Consegui pedir ajustes específicos que em plataforma genérica não dava."</p>
-        <div class="testimonial-author">— anon</div>
-      </div>
-      <div class="testimonial-card">
-        <p>"Suporte direto com quem programou fez toda diferença quando precisei de uma mudança depois da entrega."</p>
-        <div class="testimonial-author">— anon</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="eyebrow-num">perguntas frequentes</div>
-    <h2>Antes de fechar</h2>
+    <div class="eyebrow-num">Perguntas frequentes</div>
+    <h2>Antes de apertar a mão</h2>
     <div class="faq-list">
       <div class="faq-item">
-        <button class="faq-question" type="button">
-          <span>Quanto tempo leva um projeto?</span><span class="faq-icon">+</span>
-        </button>
-        <div class="faq-answer"><p>Entre 3 e 7 dias úteis, dependendo do tipo de produto e da complexidade do escopo — o prazo estimado aparece na página de cada produto.</p></div>
+        <button class="faq-question" type="button"><span>Quanto tempo leva um projeto?</span><span class="faq-icon">+</span></button>
+        <div class="faq-answer"><p>Entre 3 e 7 dias úteis, dependendo do tipo de produto e da complexidade do escopo. O prazo estimado aparece na página de cada produto.</p></div>
       </div>
       <div class="faq-item">
-        <button class="faq-question" type="button">
-          <span>O código fica comigo?</span><span class="faq-icon">+</span>
-        </button>
-        <div class="faq-answer"><p>Sim. O projeto é entregue sob seu domínio, sem dependência de mensalidade de plataforma ou construtor de terceiros.</p></div>
+        <button class="faq-question" type="button"><span>O código fica comigo?</span><span class="faq-icon">+</span></button>
+        <div class="faq-answer"><p>Sim. O projeto é entregue sob o seu domínio, sem dependência de mensalidade de plataforma ou construtor de terceiros.</p></div>
       </div>
       <div class="faq-item">
-        <button class="faq-question" type="button">
-          <span>Como funciona o suporte depois da entrega?</span><span class="faq-icon">+</span>
-        </button>
-        <div class="faq-answer"><p>Pelo Discord ou WhatsApp, com quem efetivamente desenvolveu o projeto — sem intermediário.</p></div>
+        <button class="faq-question" type="button"><span>Como funciona o suporte depois da entrega?</span><span class="faq-icon">+</span></button>
+        <div class="faq-answer"><p>Pelo Discord ou WhatsApp, direto com quem desenvolveu o projeto, sem intermediário.</p></div>
       </div>
       <div class="faq-item">
-        <button class="faq-question" type="button">
-          <span>Quais formas de pagamento vocês aceitam?</span><span class="faq-icon">+</span>
-        </button>
+        <button class="faq-question" type="button"><span>Quais formas de pagamento vocês aceitam?</span><span class="faq-icon">+</span></button>
         <div class="faq-answer"><p>Cartão de crédito e Pix, direto no site, sem precisar sair da página do produto.</p></div>
       </div>
     </div>
   </div>
 </section>
-  
-<section style="border-bottom:none;">
+
+<section class="section-wine" style="border-bottom:none;">
   <div class="wrap center-text">
-    <h2>Pronto para tirar o site do papel?</h2>
-    <p class="lede" style="margin:0 auto 28px;">Veja os produtos disponíveis e feche o pedido em poucos minutos.</p>
-    <a href="/produtos.html" class="btn btn-primary">Ver produtos e preços</a>
+    <div class="eyebrow-num">Faça uma proposta</div>
+    <h2>Pronto para tirar o projeto do papel?</h2>
+    <p class="lede">Veja os produtos disponíveis e feche o pedido em poucos minutos.</p>
+    <a href="/produtos.html" class="btn btn-primary" style="margin-top:14px;">Ver produtos e preços</a>
   </div>
 </section>
 
@@ -218,7 +241,7 @@
     <div class="footer-grid">
       <div class="footer-col">
         <h4>NULLBANKER</h4>
-        <p style="font-size:14px;color:#9c9c9c;max-width:220px;">Empresa especializada em desenvolvimento de sites e sistemas sob medida, por nuitbanker.</p>
+        <p>Desenvolvimento de sites e sistemas sob medida, por nuitbanker.</p>
       </div>
       <div class="footer-col">
         <h4>Navegação</h4>
@@ -233,8 +256,8 @@
       </div>
       <div class="footer-col">
         <h4>Pagamento</h4>
-        <a href="#" style="cursor:default;">Cartão de crédito</a>
-        <a href="#" style="cursor:default;">Pix</a>
+        <a href="/produtos.html">Cartão de crédito</a>
+        <a href="/produtos.html">Pix</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -251,12 +274,12 @@
     btn.addEventListener("click", () => {
       const item = btn.closest(".faq-item");
       const answer = item.querySelector(".faq-answer");
-      const isOpen = item.classList.contains("open");
+      const wasOpen = item.classList.contains("open");
       document.querySelectorAll(".faq-item.open").forEach((openItem) => {
         openItem.classList.remove("open");
         openItem.querySelector(".faq-answer").style.maxHeight = null;
       });
-      if (!isOpen) {
+      if (!wasOpen) {
         item.classList.add("open");
         answer.style.maxHeight = answer.scrollHeight + "px";
       }

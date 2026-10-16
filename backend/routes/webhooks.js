@@ -20,20 +20,22 @@ if (process.env.MP_ACCESS_TOKEN) {
 // req.rawBody é preenchido pelo "verify" do express.json() no server.js
 // e é o que a Stripe exige para validar a assinatura do evento.
 router.post("/stripe", async (req, res) => {
-  let event = req.body;
+  // Sem chave + segredo do webhook configurados não aceitamos nada: um evento
+  // sem assinatura verificada poderia ser forjado para marcar pedido como pago.
+  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(503).json({ error: "Webhook Stripe não configurado." });
+  }
 
-  if (stripe && process.env.STRIPE_WEBHOOK_SECRET) {
-    const signature = req.headers["stripe-signature"];
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.rawBody,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error("Assinatura do webhook Stripe inválida:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.rawBody,
+      req.headers["stripe-signature"],
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("Assinatura do webhook Stripe inválida:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   try {

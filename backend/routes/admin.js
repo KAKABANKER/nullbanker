@@ -92,6 +92,20 @@ router.get("/stats/revenue-daily", async (req, res) => {
   }
 });
 
+// GET /api/admin/products -> todos os produtos, inclusive os desativados
+router.get("/products", async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { orders: true } } },
+    });
+    res.json({ products });
+  } catch (err) {
+    console.error("Erro ao listar produtos (admin):", err);
+    res.status(500).json({ error: "Não foi possível carregar os produtos." });
+  }
+});
+
 // GET /api/admin/orders -> lista de pedidos (com filtro opcional de status e busca)
 router.get("/orders", async (req, res) => {
   try {

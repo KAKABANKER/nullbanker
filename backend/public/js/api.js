@@ -41,6 +41,16 @@ const API = {
       data = null;
     }
 
+    // Sessão expirada/inválida: limpa o que ficou salvo no navegador e avisa a página.
+    if (
+      (res.status === 401 && !path.startsWith("/auth/login") && !path.startsWith("/auth/register")) ||
+      (res.status === 403 && path.startsWith("/admin"))
+    ) {
+      this.setToken(null);
+      this.setUser(null);
+      if (typeof this.onUnauthorized === "function") this.onUnauthorized();
+    }
+
     if (!res.ok) {
       const error = new Error((data && data.error) || "Erro inesperado.");
       error.status = res.status;
@@ -63,12 +73,27 @@ const API = {
     return this.request(path, { method: "DELETE" });
   },
 
-  logout() {
+  // Encerra a sessão também no servidor (apaga o cookie httpOnly) — antes só
+  // o localStorage era limpo e o cookie continuava valendo.
+  async logout(redirectTo = "/login.html") {
+    try {
+      await fetch(this.base + "/auth/logout", { method: "POST", credentials: "include" });
+    } catch (e) {
+      /* segue mesmo se o servidor não responder */
+    }
     this.setToken(null);
     this.setUser(null);
-    window.location.href = "/login.html";
+    window.location.href = redirectTo;
   },
 };
+
+// Escapa texto antes de colocar em innerHTML (nomes, e-mails, user-agents etc.
+// vêm de terceiros e nunca podem ser tratados como HTML).
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
 
 function formatBRL(value) {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

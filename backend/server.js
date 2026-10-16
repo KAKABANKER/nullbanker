@@ -15,6 +15,7 @@ const productRoutes = require("./routes/products");
 const orderRoutes = require("./routes/orders");
 const adminRoutes = require("./routes/admin");
 const webhookRoutes = require("./routes/webhooks");
+const plumify = require("./services/plumify");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -134,6 +135,8 @@ app.get("/api/config", async (req, res) => {
       whatsappUrl: (settings && settings.whatsappUrl) || process.env.SUPPORT_WHATSAPP_URL || "",
       contactEmail: (settings && settings.contactEmail) || "",
       announcement: (settings && settings.announcement) || "",
+      // "form": cartão digitado no próprio site (gateway Plumify) | "redirect": checkout hospedado (Stripe)
+      cardCheckout: plumify.isConfigured ? "form" : "redirect",
     });
   } catch (err) {
     res.json({
@@ -141,6 +144,7 @@ app.get("/api/config", async (req, res) => {
       whatsappUrl: process.env.SUPPORT_WHATSAPP_URL || "",
       contactEmail: "",
       announcement: "",
+      cardCheckout: plumify.isConfigured ? "form" : "redirect",
     });
   }
 });

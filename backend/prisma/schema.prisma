@@ -51,7 +51,7 @@ model Product {
   description String
   price       Float
   imageUrl    String?
-  // images      String[] @default([]) // <--- COMENTE
+  images      String[] @default([])
   features    String[] @default([])
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())

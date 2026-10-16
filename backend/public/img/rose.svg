@@ -1,0 +1,25 @@
+<svg viewBox="0 0 140 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rosa vermelha">
+<defs>
+ <radialGradient id="p1" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#b3213a"/><stop offset="1" stop-color="#6a0f1f"/></radialGradient>
+ <radialGradient id="p2" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#cf2a47"/><stop offset="1" stop-color="#8a1429"/></radialGradient>
+</defs>
+<path d="M70 108C72 140 64 170 70 214" fill="none" stroke="#2f4a2c" stroke-width="5" stroke-linecap="round"/>
+<path d="M69 164c-26-6-40-22-42-38 24 2 40 16 42 38z" fill="#35542f"/>
+<path d="M71 184c24-4 38-18 42-34-24 0-40 12-42 34z" fill="#2b4627"/>
+<circle cx="99.5" cy="71.2" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="87.2" cy="90.6" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="64.8" cy="95.5" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="45.4" cy="83.2" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="40.5" cy="60.8" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="52.8" cy="41.4" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="75.2" cy="36.5" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="94.6" cy="48.8" r="24" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.4"/>
+<circle cx="84.7" cy="74.5" r="19" fill="url(#p2)" stroke="#5a0c19" stroke-width="1.2"/>
+<circle cx="70.0" cy="83.0" r="19" fill="url(#p2)" stroke="#5a0c19" stroke-width="1.2"/>
+<circle cx="55.3" cy="74.5" r="19" fill="url(#p2)" stroke="#5a0c19" stroke-width="1.2"/>
+<circle cx="55.3" cy="57.5" r="19" fill="url(#p2)" stroke="#5a0c19" stroke-width="1.2"/>
+<circle cx="70.0" cy="49.0" r="19" fill="url(#p2)" stroke="#5a0c19" stroke-width="1.2"/>
+<circle cx="84.7" cy="57.5" r="19" fill="url(#p2)" stroke="#5a0c19" stroke-width="1.2"/>
+<circle cx="70" cy="66" r="16" fill="url(#p1)" stroke="#4d0a16" stroke-width="1.2"/>
+<path d="M70 66 c-6 -1 -9 4 -6 8 c4 5 13 3 14 -5 c1 -9 -8 -14 -16 -9 c-10 6 -9 21 2 26" fill="none" stroke="#e05a73" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+</svg>

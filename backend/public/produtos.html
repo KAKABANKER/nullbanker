@@ -59,17 +59,17 @@
     }
     list.innerHTML = products
       .map((p, i) => `
-        <a class="product-card" href="/produto.html?slug=${p.slug}">
+        <a class="product-card" href="/produto.html?slug=${encodeURIComponent(p.slug)}">
           <div class="product-card-media">
-            ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" />` : `<span class="no-image">sem imagem</span>`}
+            ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" />` : `<img class="placeholder-art" src="/img/fedora.svg" alt="" />`}
           </div>
           <div class="product-card-body">
-            <span class="statement-index">${String(i + 1).padStart(2, "0")}</span>
-            <span class="statement-name">${p.name}</span>
-            <div class="statement-desc">${p.shortDesc}</div>
+            <span class="statement-index">Nº ${String(i + 1).padStart(2, "0")}</span>
+            <span class="statement-name">${esc(p.name)}</span>
+            <div class="statement-desc">${esc(p.shortDesc)}</div>
             <div class="product-card-footer">
               <span class="statement-price">${formatBRL(p.price)}</span>
-              <span style="font-size:13px;">Ver detalhes →</span>
+              <span>Ver detalhes →</span>
             </div>
           </div>
         </a>

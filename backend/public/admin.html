@@ -182,10 +182,12 @@
   </main>
 </div>
 
-<div class="admin-login" id="adminLoginGate">
-  <div class="eyebrow-num center-text">acesso restrito</div>
-  <h2 class="center-text">Painel administrativo</h2>
-  <div class="auth-box mt-40">
+<div class="admin-login" id="adminLoginGate" style="display:none;">
+  <img class="crest" src="/img/crest.svg" alt="" />
+  <div class="eyebrow-num center-text">Acesso restrito</div>
+  <h2 class="center-text">Painel da casa</h2>
+  <div class="ornament"></div>
+  <div class="auth-box">
     <div class="msg" id="adminLoginError"></div>
     <form id="adminLoginForm">
       <div class="field"><label>E-mail</label><input type="email" id="adminEmail" required /></div>
@@ -200,14 +202,35 @@
   const statusLabels = { paid: "pago", pending: "pendente", failed: "falhou", cancelled: "cancelado", refunded: "reembolsado" };
 
   function badge(status) {
-    return `<span class="badge ${status}">${statusLabels[status] || status}</span>`;
+    return `<span class="badge ${esc(status)}">${esc(statusLabels[status] || status)}</span>`;
   }
+
+  function showGate(message) {
+    document.getElementById("adminShell").style.display = "none";
+    document.getElementById("adminLoginGate").style.display = "block";
+    const box = document.getElementById("adminLoginError");
+    if (message) {
+      box.textContent = message;
+      box.className = "msg error";
+    }
+  }
+
+  // Sessão expirada, token inválido ou acesso de admin removido: volta para o login.
+  API.onUnauthorized = () => showGate("Sua sessão expirou ou o acesso foi removido. Entre novamente.");
 
   async function checkAccess() {
     const user = API.user();
     if (!user || !user.isAdmin || !API.token()) {
-      document.getElementById("adminLoginGate").style.display = "block";
-      document.getElementById("adminShell").style.display = "none";
+      showGate();
+      return false;
+    }
+    // Confere no servidor (não só no que ficou salvo no navegador).
+    try {
+      await API.get("/admin/stats");
+    } catch (e) {
+      API.setToken(null);
+      API.setUser(null);
+      showGate();
       return false;
     }
     document.getElementById("adminLoginGate").style.display = "none";
@@ -220,7 +243,7 @@
     e.preventDefault();
     const errorBox = document.getElementById("adminLoginError");
     errorBox.textContent = "";
-    errorBox.classList.remove("error");
+    errorBox.className = "msg";
     try {
       const data = await API.post("/auth/login", {
         email: document.getElementById("adminEmail").value.trim(),
@@ -228,7 +251,7 @@
       });
       if (!data.user.isAdmin) {
         errorBox.textContent = "Esta conta não tem acesso ao painel administrativo.";
-        errorBox.classList.add("error");
+        errorBox.className = "msg error";
         return;
       }
       API.setToken(data.token);
@@ -236,13 +259,13 @@
       window.location.reload();
     } catch (err) {
       errorBox.textContent = err.message || "Não foi possível entrar.";
-      errorBox.classList.add("error");
+      errorBox.className = "msg error";
     }
   });
 
   document.getElementById("logoutBtn").addEventListener("click", (e) => {
     e.preventDefault();
-    API.logout();
+    API.logout("/admin.html");
   });
 
   // ---------- Tabs ----------
@@ -329,8 +352,8 @@
               (o) => `
             <tr>
               <td>${o.id}</td>
-              <td>${o.customerName}<br /><span class="helper" style="margin:0;">${o.customerEmail}</span></td>
-              <td>${o.product ? o.product.name : "—"}</td>
+              <td>${esc(o.customerName)}<br /><span class="helper" style="margin:0;">${esc(o.customerEmail)}</span></td>
+              <td>${o.product ? esc(o.product.name) : "—"}</td>
               <td>${formatBRL(o.amount)}</td>
               <td>${o.paymentMethod === "pix" ? "Pix" : "Cartão"}</td>
               <td>
@@ -432,7 +455,7 @@
       wrap.innerHTML = visits.length
         ? `<table class="admin-table"><thead><tr><th>Página</th><th>IP</th><th>Navegador</th><th>Data</th></tr></thead>
            <tbody>${visits
-             .map((v) => `<tr><td>${v.path}</td><td>${v.ip || "—"}</td><td>${(v.userAgent || "—").slice(0, 60)}</td><td>${formatDate(v.createdAt)}</td></tr>`)
+             .map((v) => `<tr><td>${esc(v.path)}</td><td>${esc(v.ip || "—")}</td><td>${esc((v.userAgent || "—").slice(0, 60))}</td><td>${formatDate(v.createdAt)}</td></tr>`)
              .join("")}</tbody></table>`
         : `<div class="empty-state">Nenhuma visita registrada ainda.</div>`;
     } catch (e) {
@@ -460,8 +483,8 @@
         ? `<table class="admin-table"><thead><tr><th>Gateway</th><th>Evento</th><th>Data</th><th>Payload</th></tr></thead>
            <tbody>${webhooks
              .map(
-               (w) => `<tr><td>${w.gateway}</td><td>${w.eventType || "—"}</td><td>${formatDate(w.createdAt)}</td>
-               <td><pre class="json-view">${JSON.stringify(w.payload, null, 2)}</pre></td></tr>`
+               (w) => `<tr><td>${esc(w.gateway)}</td><td>${esc(w.eventType || "—")}</td><td>${formatDate(w.createdAt)}</td>
+               <td><pre class="json-view">${esc(JSON.stringify(w.payload, null, 2))}</pre></td></tr>`
              )
              .join("")}</tbody></table>`
         : `<div class="empty-state">Nenhum webhook recebido ainda.</div>`;
@@ -485,20 +508,23 @@
   async function loadProducts() {
     const wrap = document.getElementById("productsTableWrap");
     try {
-      const { products } = await API.get("/products");
+      // Rota de admin: traz também os produtos desativados (a pública só mostra os ativos).
+      const { products } = await API.get("/admin/products");
       wrap.innerHTML = products.length
-        ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Ativo</th><th></th></tr></thead>
+        ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Pedidos</th><th>Situação</th><th></th></tr></thead>
            <tbody>${products
              .map(
                (p) => `<tr>
-                <td>${p.imageUrl ? `<img src="${p.imageUrl}" class="thumb-sm" alt="${p.name}" />` : `<span class="helper" style="margin:0;">sem imagem</span>`}</td>
-                <td>${p.name}</td>
+                <td>${p.imageUrl ? `<img src="${esc(p.imageUrl)}" class="thumb-sm" alt="${esc(p.name)}" />` : `<span class="helper" style="margin:0;">sem imagem</span>`}</td>
+                <td>${esc(p.name)}</td>
                 <td>${formatBRL(p.price)}</td>
-                <td>${p.active ? "Sim" : "Não"}</td>
-                <td>
+                <td>${p._count ? p._count.orders : 0}</td>
+                <td>${p.active ? '<span class="badge paid">Na loja</span>' : '<span class="badge failed">Oculto</span>'}</td>
+                <td><div class="row-actions">
                   <button class="btn btn-outline editProductBtn" data-id="${p.id}">Editar</button>
-                  <button class="btn btn-outline deleteProductBtn" data-id="${p.id}">Excluir</button>
-                </td>
+                  <button class="btn btn-outline toggleProductBtn" data-id="${p.id}" data-active="${p.active}">${p.active ? "Ocultar" : "Mostrar"}</button>
+                  <button class="btn btn-danger deleteProductBtn" data-id="${p.id}">Excluir</button>
+                </div></td>
               </tr>`
              )
              .join("")}</tbody></table>`
@@ -508,13 +534,29 @@
         btn.addEventListener("click", () => {
           const product = products.find((p) => p.id === Number(btn.dataset.id));
           openProductForm(product);
+          document.getElementById("productForm").scrollIntoView({ behavior: "smooth", block: "start" });
+        })
+      );
+      wrap.querySelectorAll(".toggleProductBtn").forEach((btn) =>
+        btn.addEventListener("click", async () => {
+          try {
+            await API.put(`/products/${btn.dataset.id}`, { active: btn.dataset.active !== "true" });
+            loadProducts();
+          } catch (e) {
+            alert(e.message || "Não foi possível alterar a situação do produto.");
+          }
         })
       );
       wrap.querySelectorAll(".deleteProductBtn").forEach((btn) =>
         btn.addEventListener("click", async () => {
-          if (!confirm("Excluir este produto?")) return;
-          await API.del(`/products/${btn.dataset.id}`);
-          loadProducts();
+          if (!confirm("Excluir este produto? Se ele já tiver pedidos, será apenas ocultado da loja (o histórico de vendas é mantido).")) return;
+          try {
+            const result = await API.del(`/products/${btn.dataset.id}`);
+            if (result.deactivated) alert(`Este produto tem ${result.orders} pedido(s), então foi ocultado em vez de apagado.`);
+            loadProducts();
+          } catch (e) {
+            alert(e.message || "Não foi possível excluir o produto.");
+          }
         })
       );
     } catch (e) {
@@ -530,7 +572,7 @@
       .map(
         (url, i) => `
         <div class="gallery-thumb">
-          <img src="${url}" alt="Foto ${i + 1}" onerror="this.closest('.gallery-thumb').classList.add('broken')" />
+          <img src="${esc(url)}" alt="Foto ${i + 1}" onerror="this.closest('.gallery-thumb').classList.add('broken')" />
           <button type="button" class="gallery-remove" data-i="${i}">×</button>
         </div>`
       )
@@ -561,7 +603,7 @@
   function updateImagePreview() {
     const url = document.getElementById("pImageUrl").value.trim();
     const box = document.getElementById("imagePreviewBox");
-    box.innerHTML = url ? `<img src="${url}" alt="Preview" onerror="this.style.display='none'" />` : "";
+    box.innerHTML = url ? `<img src="${esc(url)}" alt="Preview" onerror="this.style.display='none'" />` : "";
   }
   document.getElementById("pImageUrl").addEventListener("input", updateImagePreview);
 
@@ -652,31 +694,31 @@
              .map((u) => {
                const locked = u.lockedUntil && new Date(u.lockedUntil) > new Date();
                return `<tr>
-                <td>${u.name}</td>
-                <td>${u.email}</td>
-                <td>${u.phone || "—"}</td>
+                <td>${esc(u.name)}</td>
+                <td>${esc(u.email)}</td>
+                <td>${esc(u.phone || "—")}</td>
                 <td>${u.isAdmin ? "Sim" : "Não"}</td>
                 <td>${u._count ? u._count.orders : 0}</td>
-                <td>${u.lastLoginAt ? `${formatDate(u.lastLoginAt)}<br /><span class="helper" style="margin:0;">${u.lastLoginIp || "—"}</span>` : "nunca"}${
+                <td>${u.lastLoginAt ? `${formatDate(u.lastLoginAt)}<br /><span class="helper" style="margin:0;">${esc(u.lastLoginIp || "—")}</span>` : "nunca"}${
                   locked ? `<br /><span class="badge failed">bloqueado</span>` : ""
                 }</td>
                 <td>${formatDate(u.createdAt)}</td>
                 <td style="white-space:nowrap;">
                   <div class="row-actions">
-                    <button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${u.name}">Ver pedidos</button>
+                    <button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${esc(u.name)}">Ver pedidos</button>
                     ${
                       u.phone
                         ? `<a class="btn btn-outline" href="https://wa.me/55${u.phone.replace(/\D/g, "")}" target="_blank" rel="noopener">WhatsApp</a>`
                         : ""
                     }
-                    <a class="btn btn-outline" href="mailto:${u.email}">E-mail</a>
-                    ${locked ? `<button class="btn btn-outline unlockUserBtn" data-id="${u.id}" data-name="${u.name}">Desbloquear</button>` : ""}
+                    <a class="btn btn-outline" href="mailto:${esc(u.email)}">E-mail</a>
+                    ${locked ? `<button class="btn btn-outline unlockUserBtn" data-id="${u.id}" data-name="${esc(u.name)}">Desbloquear</button>` : ""}
                     ${
                       me && u.id === me.id
                         ? ""
                         : `<button class="btn btn-outline toggleAdminBtn" data-id="${u.id}" data-admin="${u.isAdmin}">${u.isAdmin ? "Remover admin" : "Tornar admin"}</button>
-                           <button class="btn btn-outline resetPasswordBtn" data-id="${u.id}" data-name="${u.name}">Redefinir senha</button>
-                           <button class="btn btn-danger deleteUserBtn" data-id="${u.id}" data-name="${u.name}">Excluir conta</button>`
+                           <button class="btn btn-outline resetPasswordBtn" data-id="${u.id}" data-name="${esc(u.name)}">Redefinir senha</button>
+                           <button class="btn btn-danger deleteUserBtn" data-id="${u.id}" data-name="${esc(u.name)}">Excluir conta</button>`
                     }
                   </div>
                 </td>
@@ -767,10 +809,10 @@
            <tbody>${logs
              .map(
                (l) => `<tr>
-                <td>${l.admin ? l.admin.name : "—"}</td>
-                <td><code>${l.action}</code></td>
-                <td>${l.targetType ? `${l.targetType}${l.targetId ? ` #${l.targetId}` : ""}` : "—"}</td>
-                <td>${l.ip || "—"}</td>
+                <td>${l.admin ? esc(l.admin.name) : "—"}</td>
+                <td><code>${esc(l.action)}</code></td>
+                <td>${l.targetType ? `${esc(l.targetType)}${l.targetId ? ` #${esc(l.targetId)}` : ""}` : "—"}</td>
+                <td>${esc(l.ip || "—")}</td>
                 <td>${formatDate(l.createdAt)}</td>
               </tr>`
              )

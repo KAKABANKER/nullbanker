@@ -1,0 +1,13 @@
+<svg viewBox="0 0 300 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chapéu fedora">
+<defs>
+  <linearGradient id="felt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b211c"/><stop offset="1" stop-color="#120d0b"/></linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8f7237"/><stop offset="0.5" stop-color="#e8cf8f"/><stop offset="1" stop-color="#8f7237"/></linearGradient>
+</defs>
+<ellipse cx="150" cy="150" rx="118" ry="9" fill="#000" opacity="0.35"/>
+<path d="M8 112C8 96 78 86 150 86s142 10 142 26c0 20-70 32-142 32S8 132 8 112z" fill="url(#felt)" stroke="#8f7237" stroke-width="1.5"/>
+<path d="M66 102C62 64 80 30 118 25c14-2 22 12 32 12s18-14 32-12c38 5 56 39 52 77-22 10-146 10-168 0z" fill="url(#felt)" stroke="#8f7237" stroke-width="1.5"/>
+<path d="M112 28c10 6 22 12 38 12s28-6 38-12" fill="none" stroke="#000" stroke-width="3" opacity="0.5"/>
+<path d="M67 90c32 12 134 12 166 0l1.5 12c-24 11-144 11-169 0z" fill="#7a1424" stroke="#8f7237" stroke-width="1"/>
+<path d="M67 90c32 12 134 12 166 0" fill="none" stroke="url(#gold)" stroke-width="1.6"/>
+<path d="M68.5 102c25 11 145 11 169 0" fill="none" stroke="url(#gold)" stroke-width="1.6"/>
+</svg>

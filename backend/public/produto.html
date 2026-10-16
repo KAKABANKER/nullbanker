@@ -40,6 +40,13 @@
 <script src="/js/api.js"></script>
 <script src="/js/main.js"></script>
 <script>
+  // Número máximo de parcelas oferecidas no cartão (1 = só à vista).
+  // Só aumente depois de confirmar com a Plumify que o parcelamento está
+  // habilitado na sua conta e se há juros.
+  const MAX_INSTALLMENTS = 1;
+  const MIN_INSTALLMENT_VALUE = 50;
+
+  let cardMode = "redirect"; // "form" = cartão digitado no site (Plumify) | "redirect" = Stripe
   let currentProduct = null;
   let selectedPayment = null;
   let slideIndex = 0;
@@ -50,7 +57,7 @@
     return `
       <div class="slider" id="productSlider">
         <div class="slider-track" id="sliderTrack">
-          ${images.map((src) => `<div class="slide"><img src="${src}" alt="Foto do site" /></div>`).join("")}
+          ${images.map((src) => `<div class="slide"><img src="${esc(src)}" alt="Foto do projeto" /></div>`).join("")}
         </div>
         ${images.length > 1 ? `
           <button type="button" class="slider-arrow prev" id="sliderPrev" aria-label="Foto anterior">‹</button>
@@ -88,19 +95,19 @@
 
     wrap.innerHTML = `
       <div>
-        ${slideImages.length ? renderSlider(slideImages) : `<div class="product-hero-media"><span class="no-image" style="position:static;">sem fotos ainda</span></div>`}
-        <div class="eyebrow-num mt-40">produto</div>
-        <h2>${p.name}</h2>
-        <p class="lede">${p.description}</p>
+        ${slideImages.length ? renderSlider(slideImages) : `<div class="product-hero-media"><img src="/img/fedora.svg" alt="" style="width:42%;height:auto;object-fit:contain;filter:none;opacity:.7" /></div>`}
+        <div class="eyebrow-num mt-40">Produto</div>
+        <h2>${esc(p.name)}</h2>
+        <p class="lede">${esc(p.description)}</p>
         <ul class="feature-list">
-          ${(p.features || []).map((f) => `<li>${f}</li>`).join("")}
+          ${(p.features || []).map((f) => `<li>${esc(f)}</li>`).join("")}
         </ul>
       </div>
       <div>
         <div class="checkout-card">
           <div class="checkout-head">
             <span class="eyebrow-num" style="margin:0;">resumo do pedido</span>
-            <h3 style="margin:6px 0 0;">${p.name}</h3>
+            <h3 style="margin:6px 0 0;">${esc(p.name)}</h3>
           </div>
           <div class="checkout-price-row">
             <span>Valor total</span>
@@ -121,12 +128,37 @@
             <div class="pay-options">
               <button type="button" class="pay-option" data-method="credit_card">
                 <strong>Cartão de crédito</strong>
-                <span>Checkout seguro via Stripe</span>
+                <span>${cardMode === "form" ? "Pagamento direto no site" : "Checkout seguro via Stripe"}</span>
               </button>
               <button type="button" class="pay-option" data-method="pix">
                 <strong>Pix</strong>
                 <span>QR Code gerado na hora</span>
               </button>
+            </div>
+
+            <div id="cardFields" style="display:none;">
+              <div class="field">
+                <label for="cardNumber">Número do cartão</label>
+                <input type="text" id="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000" />
+              </div>
+              <div class="field">
+                <label for="cardHolder">Nome impresso no cartão</label>
+                <input type="text" id="cardHolder" autocomplete="cc-name" />
+              </div>
+              <div class="two-col-even">
+                <div class="field">
+                  <label for="cardExp">Validade</label>
+                  <input type="text" id="cardExp" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" />
+                </div>
+                <div class="field">
+                  <label for="cardCvv">CVV</label>
+                  <input type="text" id="cardCvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" />
+                </div>
+              </div>
+              <div class="field" id="installmentsField" style="display:none;">
+                <label for="cardInstallments">Parcelas</label>
+                <select id="cardInstallments"></select>
+              </div>
             </div>
 
             <div class="field" id="pixFields" style="display:none;">
@@ -155,7 +187,7 @@
             <button type="submit" class="btn btn-primary btn-block" id="orderSubmit" disabled>
               Selecione uma forma de pagamento
             </button>
-            <p class="checkout-note">🔒 Checkout pronto para Stripe (cartão) e Plumify (Pix) — assim que a gateway for conectada pelo admin, o pagamento é processado automaticamente.</p>
+            <p class="checkout-note">🔒 Pagamento processado por gateway segura. O site não guarda o número completo nem o CVV do cartão.</p>
           </form>
 
           <div id="pixResult" style="display:none;">
@@ -163,7 +195,7 @@
               <span>Pix gerado</span>
               <span class="checkout-price" id="pixAmount"></span>
             </div>
-            <img id="pixQr" alt="QR Code Pix" style="max-width:200px;margin:0 auto 16px;border:1px solid var(--black);display:block;" />
+            <img id="pixQr" alt="QR Code Pix" style="max-width:200px;margin:0 auto 16px;border:1px solid var(--gold);display:block;background:#fff;padding:6px;" />
             <label>Copia e cola</label>
             <textarea id="pixCode" rows="3" readonly></textarea>
             <button class="btn btn-outline btn-block mt-40" id="copyPix" type="button">Copiar código Pix</button>
@@ -174,22 +206,80 @@
 
     if (slideImages.length > 1) bindSlider();
 
+    setupInstallments(p.price);
+    bindCardMasks();
+
     document.querySelectorAll(".pay-option").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".pay-option").forEach((b) => b.classList.remove("selected"));
         btn.classList.add("selected");
         selectedPayment = btn.dataset.method;
         const isPix = selectedPayment === "pix";
-        document.getElementById("pixFields").style.display = isPix ? "block" : "none";
-        document.getElementById("phoneField").style.display = isPix ? "block" : "none";
-        document.getElementById("addressFields").style.display = isPix ? "block" : "none";
+        const isCardForm = selectedPayment === "credit_card" && cardMode === "form";
+        const needsBilling = isPix || isCardForm;
+        document.getElementById("pixFields").style.display = needsBilling ? "block" : "none";
+        document.getElementById("phoneField").style.display = needsBilling ? "block" : "none";
+        document.getElementById("addressFields").style.display = needsBilling ? "block" : "none";
+        document.getElementById("cardFields").style.display = isCardForm ? "block" : "none";
         const submitBtn = document.getElementById("orderSubmit");
         submitBtn.disabled = false;
-        submitBtn.textContent = isPix ? "Gerar Pix" : "Ir para pagamento seguro";
+        submitBtn.textContent = submitLabel();
       });
     });
 
     document.getElementById("orderForm").addEventListener("submit", handleSubmit);
+  }
+
+  function submitLabel() {
+    if (selectedPayment === "pix") return "Gerar Pix";
+    if (selectedPayment === "credit_card" && cardMode === "form") return `Pagar ${formatBRL(currentProduct.price)}`;
+    return "Ir para pagamento seguro";
+  }
+
+  function setupInstallments(price) {
+    const max = Math.max(1, Math.min(12, MAX_INSTALLMENTS));
+    const select = document.getElementById("cardInstallments");
+    const options = [];
+    for (let n = 1; n <= max; n++) {
+      if (n > 1 && price / n < MIN_INSTALLMENT_VALUE) break;
+      options.push(`<option value="${n}">${n === 1 ? "À vista" : `${n}x de ${formatBRL(price / n)}`} </option>`);
+    }
+    select.innerHTML = options.join("");
+    document.getElementById("installmentsField").style.display = options.length > 1 ? "block" : "none";
+  }
+
+  function bindCardMasks() {
+    const num = document.getElementById("cardNumber");
+    const exp = document.getElementById("cardExp");
+    const cvv = document.getElementById("cardCvv");
+    num.addEventListener("input", () => {
+      num.value = num.value.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
+    });
+    exp.addEventListener("input", () => {
+      const d = exp.value.replace(/\D/g, "").slice(0, 4);
+      exp.value = d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+    });
+    cvv.addEventListener("input", () => {
+      cvv.value = cvv.value.replace(/\D/g, "").slice(0, 4);
+    });
+  }
+
+  function luhnOk(digits) {
+    let sum = 0, alt = false;
+    for (let i = digits.length - 1; i >= 0; i--) {
+      let n = Number(digits[i]);
+      if (alt) { n *= 2; if (n > 9) n -= 9; }
+      sum += n;
+      alt = !alt;
+    }
+    return sum % 10 === 0;
+  }
+
+  function clearCardFields() {
+    ["cardNumber", "cardHolder", "cardExp", "cardCvv"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
   }
 
   async function handleSubmit(e) {
@@ -214,7 +304,9 @@
       customerEmail,
     };
 
-    if (selectedPayment === "pix") {
+    const isCardForm = selectedPayment === "credit_card" && cardMode === "form";
+
+    if (selectedPayment === "pix" || isCardForm) {
       const cpf = document.getElementById("cpf").value.trim();
       const customerPhone = document.getElementById("customerPhone").value.trim();
       const address = {
@@ -226,13 +318,37 @@
         state: document.getElementById("addrState").value.trim(),
       };
       if (!cpf || !customerPhone || Object.values(address).some((v) => !v)) {
-        errorBox.textContent = "Preencha CPF, telefone e o endereço completo para gerar o Pix.";
+        errorBox.textContent = "Preencha CPF, telefone e o endereço completo para continuar.";
         errorBox.classList.add("error");
         return;
       }
       payload.cpf = cpf;
       payload.customerPhone = customerPhone;
       payload.address = address;
+    }
+
+    if (isCardForm) {
+      const number = document.getElementById("cardNumber").value.replace(/\D/g, "");
+      const holderName = document.getElementById("cardHolder").value.trim();
+      const exp = document.getElementById("cardExp").value;
+      const cvv = document.getElementById("cardCvv").value.replace(/\D/g, "");
+      const [mm, yy] = exp.split("/");
+      const month = Number(mm);
+      const year = 2000 + Number(yy);
+
+      const fail = (msg) => {
+        errorBox.textContent = msg;
+        errorBox.classList.add("error");
+      };
+      if (number.length < 13 || !luhnOk(number)) return fail("Número do cartão inválido.");
+      if (!holderName) return fail("Informe o nome impresso no cartão.");
+      if (!mm || !yy || yy.length !== 2 || month < 1 || month > 12) return fail("Validade inválida. Use o formato MM/AA.");
+      const now = new Date();
+      if (year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)) return fail("Cartão vencido.");
+      if (cvv.length < 3) return fail("CVV inválido.");
+
+      payload.card = { number, holderName, cvv, expirationMonth: String(month).padStart(2, "0"), expirationYear: String(year) };
+      payload.installments = Number(document.getElementById("cardInstallments").value) || 1;
     }
 
     const submitBtn = document.getElementById("orderSubmit");
@@ -243,7 +359,9 @@
       const data = await API.post("/orders", payload);
 
       if (selectedPayment === "credit_card") {
-        window.location.href = data.checkoutUrl;
+        // Stripe devolve a URL do checkout hospedado; no cartão direto (Plumify)
+        // o pedido já volta com o status e vamos para a página de confirmação.
+        window.location.href = data.checkoutUrl || `/pedido-confirmado.html?order=${data.order.id}`;
         return;
       }
 
@@ -263,7 +381,9 @@
       errorBox.textContent = err.message || "Não foi possível processar o pedido.";
       errorBox.classList.add("error");
       submitBtn.disabled = false;
-      submitBtn.textContent = selectedPayment === "pix" ? "Gerar Pix" : "Ir para pagamento seguro";
+      submitBtn.textContent = submitLabel();
+    } finally {
+      clearCardFields(); // não deixa dados do cartão parados na página
     }
   }
 
@@ -274,7 +394,11 @@
       return;
     }
     try {
-      const data = await API.get(`/products/${slug}`);
+      try {
+        const cfg = await API.get("/config");
+        cardMode = cfg.cardCheckout === "form" ? "form" : "redirect";
+      } catch (e) { /* mantém o padrão (redirect) */ }
+      const data = await API.get(`/products/${encodeURIComponent(slug)}`);
       currentProduct = data.product;
       renderProduct(currentProduct);
     } catch (e) {
