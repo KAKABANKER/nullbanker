@@ -1,6 +1,6 @@
 const express = require("express");
 const { prisma } = require("../db");
-const { optionalAuth, requireAuth } = require("../middleware/auth");
+const { requireAuth } = require("../middleware/auth");
 const plumify = require("../services/plumify");
 
 const router = express.Router();
@@ -12,11 +12,10 @@ if (process.env.STRIPE_SECRET_KEY) {
   stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 }
 
-let mpClient = null;
 let mpPayment = null;
 if (process.env.MP_ACCESS_TOKEN) {
   const { MercadoPagoConfig, Payment } = require("mercadopago");
-  mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+  const mpClient = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
   mpPayment = new Payment(mpClient);
 }
 
@@ -49,8 +48,8 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Produto não encontrado." });
     }
 
-    const isFreeProduct = Number(product.price) <= 0;
-    if (isFreeProduct && paymentMethod) {
+    // Produto grátis não passa por checkout: baixa direto pela biblioteca.
+    if (Number(product.price) <= 0) {
       return res.status(400).json({
         error: "Este produto é grátis: entre na sua conta e baixe direto, sem pagamento.",
       });
@@ -82,7 +81,7 @@ router.post("/", requireAuth, async (req, res) => {
       address.state &&
       address.zipCode;
 
-        if (usePlumify) {
+    if (usePlumify) {
       // Pix exige endereço completo; cartão não pede endereço (decisão do produto).
       if (paymentMethod === "pix" && !hasFullAddress) {
         return res.status(400).json({
@@ -106,7 +105,7 @@ router.post("/", requireAuth, async (req, res) => {
         }
       }
     }
-    
+
     // ---------- Cria o pedido (já com validações feitas) ----------
     const gatewayName = usePlumify
       ? "plumify"
@@ -138,7 +137,9 @@ router.post("/", requireAuth, async (req, res) => {
             customerEmail,
             customerPhone: customerPhone || "",
             customerCpf: cpf,
-            address,
+            address: hasFullAddress
+              ? address
+              : { zipCode: "", street: "", number: "", neighborhood: "", city: "", state: "" },
             card,
             installments,
             postbackUrl: `${APP_URL}/api/webhooks/plumify`,
@@ -289,6 +290,46 @@ router.post("/", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Não foi possível processar o pedido." });
   }
 });
+
+// GET /api/orders/:id -> status do pedido (para a página de confirmação)
+router.get("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(404).json({ error: "Pedido não encontrado." });
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { product: { select: { name: true } } },
+    });
+    if (!order) return res.status(404).json({ error: "Pedido não encontrado." });
+    res.json({
+      order: {
+        id: order.id,
+        status: order.status,
+        amount: order.amount,
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        product: { name: order.product ? order.product.name : "" },
+      },
+    });
+  } catch (err) {
+    console.error("Erro ao buscar pedido:", err);
+    res.status(500).json({ error: "Não foi possível carregar o pedido." });
+  }
+});
+
+// GET /api/orders -> pedidos do usuário logado
+router.get("/", requireAuth, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user.id },
+      include: { product: true },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({ orders });
+  } catch (err) {
+    console.error("Erro ao listar pedidos:", err);
+    res.status(500).json({ error: "Não foi possível carregar seus pedidos." });
+  }
 });
 
 module.exports = router;
