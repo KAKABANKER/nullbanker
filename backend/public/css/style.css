@@ -248,6 +248,11 @@ section:last-of-type { border-bottom: none; }
 .hero-emblem img { width: min(430px, 100%); animation: floaty 7s ease-in-out infinite; filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6)); }
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 
+/* NOVO — Emblema do hero escondido no celular */
+@media (max-width: 900px) {
+  .hero-emblem { display: none; }
+}
+
 /* ---------- Molduras, fichas e cartões ---------- */
 
 .ledger, .offer-card, .support-card, .trust-item, .mini-stat, .checkout-card, .auth-box, .stat-cell, .house-art {
