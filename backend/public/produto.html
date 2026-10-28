@@ -148,20 +148,23 @@
     });
   }
 
-  // ---------- Descrição expandível ----------
-  function renderDescription(p) {
-    const long = String(p.description || "");
-    const short = String(p.shortDesc || "");
-    const needsToggle = long.length > DESCRIPTION_LIMIT;
-    const initial = needsToggle ? long.slice(0, DESCRIPTION_LIMIT).trimEnd() + "…" : long;
-    return `
-      <div class="product-desc" id="productDesc" data-full="${esc(long)}">
-        <p class="lede" id="descShort">${short ? esc(short) : ""}</p>
-        <p class="product-desc-text" id="descLong" style="display:none;">${esc(initial)}</p>
-        ${needsToggle ? `<button type="button" class="btn btn-outline btn-sm product-desc-toggle" id="descToggle">Ver descrição completa</button>` : ""}
-      </div>
-    `;
-  }
+ function renderDescription(p) {
+  const long = String(p.description || "").trim();
+  const short = String(p.shortDesc || "").trim();
+
+  // Mostra o botão sempre que a descrição completa for diferente da curta
+  // E tiver conteúdo. Não depende mais de "tamanho > 280".
+  const hasLong = long.length > 0;
+  const needsToggle = hasLong && long !== short;
+
+  return `
+    <div class="product-desc" id="productDesc" data-full="${esc(long)}">
+      <p class="lede" id="descShort">${esc(short)}</p>
+      <p class="product-desc-text" id="descLong" style="display:none;">${esc(long)}</p>
+      ${needsToggle ? `<button type="button" class="btn btn-outline btn-sm product-desc-toggle" id="descToggle">Mostrar descrição completa</button>` : ""}
+    </div>
+  `;
+}
 
   function bindDescription() {
     const toggle = document.getElementById("descToggle");
