@@ -46,11 +46,74 @@
   const MAX_INSTALLMENTS = 1;
   const MIN_INSTALLMENT_VALUE = 50;
 
+  // 🔎 NOVO — limite da descrição "curta" na página. Acima disso mostra o botão.
+  const DESCRIPTION_LIMIT = 280;
+
   let cardMode = "redirect"; // "form" = cartão digitado no site (Plumify) | "redirect" = Stripe
   let currentProduct = null;
   let selectedPayment = null;
   let slideIndex = 0;
   let slideImages = [];
+
+  // 🔎 NOVO — bandeiras detectáveis pelo número do cartão (BIN/prefixo + comprimento).
+  // A ordem importa: Elo/Mastercard podem compartilhar prefixos com outras, então
+  // verificamos as mais específicas primeiro.
+  const CARD_BRANDS = [
+    {
+      name: "visa",
+      label: "Visa",
+      test: (d) => /^4/.test(d),
+      lengths: [13, 16, 19],
+    },
+    {
+      name: "mastercard",
+      label: "Mastercard",
+      // 51-55 e 2221-2720
+      test: (d) => {
+        const n2 = Number(d.slice(0, 2));
+        const n4 = Number(d.slice(0, 4));
+        return (n2 >= 51 && n2 <= 55) || (n4 >= 2221 && n4 <= 2720);
+      },
+      lengths: [16],
+    },
+    {
+      name: "amex",
+      label: "Amex",
+      test: (d) => /^3[47]/.test(d),
+      lengths: [15],
+    },
+    {
+      name: "elo",
+      label: "Elo",
+      test: (d) =>
+        /^(4011|4312|4389|4514|4573|4576|5067|5090|6277|6362|6363|650|651|655)/.test(d),
+      lengths: [16],
+    },
+    {
+      name: "hipercard",
+      label: "Hipercard",
+      test: (d) => /^(606282|3841)/.test(d),
+      lengths: [16],
+    },
+    {
+      name: "diners",
+      label: "Diners",
+      test: (d) => /^3(0[0-5]|[68])/.test(d),
+      lengths: [14, 16],
+    },
+    {
+      name: "discover",
+      label: "Discover",
+      test: (d) => /^(6011|65|64[4-9])/.test(d),
+      lengths: [16, 19],
+    },
+  ];
+
+  function detectCardBrand(digits) {
+    if (!digits) return null;
+    const ordered = CARD_BRANDS.slice().sort((a, b) => (b.test(digits) ? 1 : 0) - (a.test(digits) ? 1 : 0));
+    return ordered.find((b) => b.test(digits)) || null;
+  }
 
   function renderSlider(images) {
     if (!images.length) return "";
@@ -89,6 +152,59 @@
     });
   }
 
+  // 🔎 NOVO — descrição com truncamento e botão "ver descrição completa".
+  // Usa o `shortDesc` como resumo e a `description` completa no expandido.
+  function renderDescription(p) {
+    const long = String(p.description || "");
+    const short = String(p.shortDesc || "");
+    const needsToggle = long.length > DESCRIPTION_LIMIT;
+    const initial = needsToggle ? long.slice(0, DESCRIPTION_LIMIT).trimEnd() + "…" : long;
+    return `
+      <div class="product-desc" id="productDesc" data-full="${esc(long)}">
+        <p class="lede" id="descShort">${short ? esc(short) : ""}</p>
+        <p class="product-desc-text" id="descLong" style="display:none;">${esc(initial)}</p>
+        ${needsToggle ? `<button type="button" class="btn btn-outline btn-sm product-desc-toggle" id="descToggle">Ver descrição completa</button>` : ""}
+      </div>
+    `;
+  }
+
+  function bindDescription() {
+    const toggle = document.getElementById("descToggle");
+    const long = document.getElementById("descLong");
+    const short = document.getElementById("descShort");
+    if (!toggle || !long) return;
+    const full = long.parentElement.getAttribute("data-full") || "";
+    let expanded = false;
+    toggle.addEventListener("click", () => {
+      expanded = !expanded;
+      if (expanded) {
+        long.textContent = full;
+        long.style.display = "block";
+        if (short) short.style.display = "none";
+        toggle.textContent = "Ver menos";
+      } else {
+        long.textContent = full.slice(0, DESCRIPTION_LIMIT).trimEnd() + "…";
+        long.style.display = "none";
+        if (short) short.style.display = "block";
+        toggle.textContent = "Ver descrição completa";
+      }
+    });
+  }
+
+  // 🔎 NOVO — busca de CEP via ViaCEP. Devolve o objeto com logradouro/bairro/localidade/uf
+  // ou null se o CEP não for encontrado. Se a rede falhar, devolve null (fallback manual).
+  async function buscarCep(cepDigits) {
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.erro) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function renderProduct(p) {
     const wrap = document.getElementById("productWrap");
     slideImages = [p.imageUrl, ...(p.images || [])].filter(Boolean);
@@ -98,7 +214,9 @@
         ${slideImages.length ? renderSlider(slideImages) : `<div class="product-hero-media"><img src="/img/fedora.svg" alt="" style="width:42%;height:auto;object-fit:contain;filter:none;opacity:.7" /></div>`}
         <div class="eyebrow-num mt-40">Produto</div>
         <h2>${esc(p.name)} ${p.isFree ? '<span class="price-free" style="margin-left:10px;">GRÁTIS</span>' : ""}</h2>
-        <p class="lede">${esc(p.description)}</p>
+
+        ${renderDescription(p)}
+
         <ul class="feature-list">
           ${(p.features || []).map((f) => `<li>${esc(f)}</li>`).join("")}
         </ul>
@@ -153,7 +271,11 @@
             <div id="cardFields" style="display:none;">
               <div class="field">
                 <label for="cardNumber">Número do cartão</label>
-                <input type="text" id="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000" />
+                <div class="input-with-badge">
+                  <input type="text" id="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000" />
+                  <!-- 🔎 NOVO: bandeira detectada -->
+                  <span class="card-brand-badge" id="cardBrandBadge" aria-live="polite"></span>
+                </div>
               </div>
               <div class="field">
                 <label for="cardHolder">Nome impresso no cartão</label>
@@ -184,7 +306,15 @@
               <input type="tel" id="customerPhone" placeholder="(00) 00000-0000" />
             </div>
             <div id="addressFields" style="display:none;">
-              <div class="field"><label for="addrZip">CEP</label><input type="text" id="addrZip" placeholder="00000-000" /></div>
+              <!-- 🔎 NOVO: CEP com botão de busca -->
+              <div class="field">
+                <label for="addrZip">CEP</label>
+                <div class="input-with-btn">
+                  <input type="text" id="addrZip" inputmode="numeric" placeholder="00000-000" maxlength="9" />
+                  <button type="button" class="btn btn-outline btn-sm" id="addrZipSearch">Buscar</button>
+                </div>
+                <p class="helper" id="addrZipHint" style="margin:8px 0 0;"></p>
+              </div>
               <div class="two-col-inline">
                 <div class="field"><label for="addrStreet">Rua</label><input type="text" id="addrStreet" /></div>
                 <div class="field"><label for="addrNumber">Número</label><input type="text" id="addrNumber" /></div>
@@ -220,6 +350,7 @@
 
     if (slideImages.length > 1) bindSlider();
 
+    bindDescription();
     setupInstallments(p.price);
     bindCardMasks();
     setupGate(p);
@@ -243,6 +374,50 @@
     });
 
     document.getElementById("orderForm").addEventListener("submit", handleSubmit);
+
+    // 🔎 NOVO: busca de CEP
+    const zipInput = document.getElementById("addrZip");
+    const zipSearch = document.getElementById("addrZipSearch");
+    const zipHint = document.getElementById("addrZipHint");
+
+    function formatCep(v) {
+      const d = String(v || "").replace(/\D/g, "").slice(0, 8);
+      return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+    }
+    zipInput.addEventListener("input", () => { zipInput.value = formatCep(zipInput.value); });
+
+    async function doZipLookup() {
+      const digits = zipInput.value.replace(/\D/g, "");
+      zipHint.textContent = "";
+      zipHint.style.color = "";
+      if (digits.length !== 8) {
+        zipHint.textContent = "Digite um CEP com 8 dígitos.";
+        zipHint.style.color = "#ffa8b4";
+        return;
+      }
+      zipSearch.disabled = true;
+      const original = zipSearch.textContent;
+      zipSearch.textContent = "Buscando...";
+      const data = await buscarCep(digits);
+      zipSearch.disabled = false;
+      zipSearch.textContent = original;
+      if (!data) {
+        zipHint.textContent = "CEP não encontrado. Preencha o endereço manualmente.";
+        zipHint.style.color = "#ffa8b4";
+        return;
+      }
+      if (data.logradouro) document.getElementById("addrStreet").value = data.logradouro;
+      if (data.bairro) document.getElementById("addrNeighborhood").value = data.bairro;
+      if (data.localidade) document.getElementById("addrCity").value = data.localidade;
+      if (data.uf) document.getElementById("addrState").value = data.uf;
+      zipHint.textContent = "Endereço preenchido. Confira o número e complemento.";
+      zipHint.style.color = "var(--ok)";
+      document.getElementById("addrNumber").focus();
+    }
+    zipSearch.addEventListener("click", doZipLookup);
+    zipInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); doZipLookup(); }
+    });
   }
 
 
@@ -303,12 +478,29 @@
     document.getElementById("installmentsField").style.display = options.length > 1 ? "block" : "none";
   }
 
+  // 🔎 NOVO — máscara do cartão + detecção da bandeira + limpeza visual da bandeira
   function bindCardMasks() {
     const num = document.getElementById("cardNumber");
     const exp = document.getElementById("cardExp");
     const cvv = document.getElementById("cardCvv");
+    const brandBadge = document.getElementById("cardBrandBadge");
+
+    function updateBrand() {
+      if (!brandBadge) return;
+      const digits = num.value.replace(/\D/g, "");
+      const brand = detectCardBrand(digits);
+      if (brand) {
+        brandBadge.textContent = brand.label;
+        brandBadge.className = "card-brand-badge known " + brand.name;
+      } else {
+        brandBadge.textContent = "";
+        brandBadge.className = "card-brand-badge";
+      }
+    }
+
     num.addEventListener("input", () => {
       num.value = num.value.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
+      updateBrand();
     });
     exp.addEventListener("input", () => {
       const d = exp.value.replace(/\D/g, "").slice(0, 4);
@@ -317,6 +509,8 @@
     cvv.addEventListener("input", () => {
       cvv.value = cvv.value.replace(/\D/g, "").slice(0, 4);
     });
+
+    updateBrand();
   }
 
   function luhnOk(digits) {
@@ -335,6 +529,8 @@
       const el = document.getElementById(id);
       if (el) el.value = "";
     });
+    const brandBadge = document.getElementById("cardBrandBadge");
+    if (brandBadge) { brandBadge.textContent = ""; brandBadge.className = "card-brand-badge"; }
   }
 
   async function handleSubmit(e) {
