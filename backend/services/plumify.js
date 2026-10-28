@@ -49,17 +49,18 @@ function verifyWebhookToken(token) {
 }
 
 function buildCustomer({ customerName, customerEmail, customerPhone, customerCpf, address }) {
+  const a = address || {};
   return {
     name: customerName,
     email: customerEmail,
     phone_number: customerPhone,
     document: (customerCpf || "").replace(/\D/g, ""),
-    street_name: address.street,
-    number: address.number,
-    neighborhood: address.neighborhood,
-    city: address.city,
-    state: address.state,
-    zip_code: (address.zipCode || "").replace(/\D/g, ""),
+    street_name: a.street || "",
+    number: a.number || "",
+    neighborhood: a.neighborhood || "",
+    city: a.city || "",
+    state: a.state || "",
+    zip_code: (a.zipCode || "").replace(/\D/g, ""),
   };
 }
 
