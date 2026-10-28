@@ -82,12 +82,12 @@ router.post("/", requireAuth, async (req, res) => {
       address.state &&
       address.zipCode;
 
-    if (usePlumify) {
-      // Plumify exige endereço completo + CPF para os dois meios.
-      if (!hasFullAddress) {
+        if (usePlumify) {
+      // Pix exige endereço completo; cartão não pede endereço (decisão do produto).
+      if (paymentMethod === "pix" && !hasFullAddress) {
         return res.status(400).json({
           error:
-            "Preencha o endereço completo (rua, número, bairro, cidade, estado e CEP) para continuar.",
+            "Preencha o endereço completo (rua, número, bairro, cidade, estado e CEP) para gerar o Pix.",
         });
       }
       if (!cpf) {
@@ -106,7 +106,7 @@ router.post("/", requireAuth, async (req, res) => {
         }
       }
     }
-
+    
     // ---------- Cria o pedido (já com validações feitas) ----------
     const gatewayName = usePlumify
       ? "plumify"
