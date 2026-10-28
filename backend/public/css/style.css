@@ -1,7 +1,7 @@
 /* =====================================================================
-   NULLBANKER — tema "Casa de Negócios"
-   Preto quente, ouro envelhecido e vinho. Listras finas de terno,
-   molduras douradas, tipografia clássica. Arte 100% original (SVG/CSS).
+   NULLBANKER — SITE REAL 
+   SYSTEMA PROJETADO PARA VENDAS DE TELAS FAKES
+   Arte 100% original (SVG/CSS).
    ===================================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Lato:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
@@ -721,46 +721,48 @@ input[type="color"] { width: 64px; min-height: 44px; padding: 4px; cursor: point
 
 /* ---------- Input com "badge" da bandeira do cartão ---------- */
 .input-with-badge { position: relative; }
-.input-with-badge input { padding-right: 80px; }
+.input-with-badge input { padding-right: 90px; }
 
 .card-brand-badge {
   position: absolute;
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  font-family: var(--display);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--gold-l);
-  background: var(--ink-2);
-  border: 1px solid var(--line-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 28px;
+  padding: 0;
   border-radius: 3px;
-  padding: 3px 8px;
-  line-height: 1.2;
+  background: transparent;
+  border: 1px solid transparent;
   pointer-events: none;
-  opacity: 0.55;
-  transition: opacity 0.2s, color 0.2s, border-color 0.2s;
-  min-width: 48px;
-  text-align: center;
+  opacity: 0.35;
+  transition: opacity 0.2s, border-color 0.2s, background 0.2s;
 }
-.card-brand-badge.known { opacity: 1; border-color: var(--gold); color: var(--gold-l); }
-
-/* Cores por bandeira — combinam com o tema (não são as cores oficiais) */
-.card-brand-badge.visa        { color: #a9c6ff; border-color: #4a6fb8; }
-.card-brand-badge.mastercard  { color: #ffbdb6; border-color: #b85a4a; }
-.card-brand-badge.amex        { color: #9ed8ff; border-color: #4a86b8; }
-.card-brand-badge.elo         { color: #ffe08a; border-color: #b89a4a; }
-.card-brand-badge.hipercard   { color: #ffb9c7; border-color: #b84a63; }
-.card-brand-badge.diners      { color: #c4d2ff; border-color: #5a6bb8; }
-.card-brand-badge.discover    { color: #ffd1a8; border-color: #b8844a; }
+.card-brand-badge.known { opacity: 1; }
+.card-brand-badge .brand-logo {
+  display: block;
+  height: 20px;
+  width: auto;
+  max-width: 64px;
+  border-radius: 2px;
+}
+.card-brand-badge.known.visa       { border-color: #1A1F71; background: #fff; }
+.card-brand-badge.known.mastercard { border-color: #000;     background: #fff; }
+.card-brand-badge.known.amex       { border-color: #2E77BC; background: #fff; }
+.card-brand-badge.known.elo        { border-color: #000;     background: #fff; }
+.card-brand-badge.known.hipercard  { border-color: #B3131B; background: #fff; }
+.card-brand-badge.known.diners     { border-color: #0079BE; background: #fff; }
+.card-brand-badge.known.discover   { border-color: #F76B1C; background: #fff; }
 
 /* ---------- CEP com botão "Buscar" ao lado ---------- */
 .input-with-btn { display: flex; gap: 8px; align-items: stretch; }
 .input-with-btn input { flex: 1; min-width: 0; }
 .input-with-btn .btn { white-space: nowrap; }
 
-/* ---------- Descrição expandível (ver descrição completa) ---------- */
+/* ---------- Descrição expandível ---------- */
 .product-desc { margin-bottom: 24px; }
 .product-desc .lede { margin-bottom: 12px; }
 .product-desc-text {
@@ -777,6 +779,7 @@ input[type="color"] { width: 64px; min-height: 44px; padding: 4px; cursor: point
 @media (max-width: 480px) {
   .input-with-btn { flex-direction: column; }
   .input-with-btn .btn { width: 100%; }
-  .input-with-badge input { padding-right: 66px; }
-  .card-brand-badge { font-size: 10px; padding: 2px 6px; min-width: 42px; }
+  .input-with-badge input { padding-right: 76px; }
+  .card-brand-badge { min-width: 48px; height: 24px; right: 6px; }
+  .card-brand-badge .brand-logo { height: 16px; max-width: 52px; }
 }
