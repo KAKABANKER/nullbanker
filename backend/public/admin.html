@@ -545,8 +545,9 @@
     } catch (e) { wrap.innerHTML = emptyRow("Não foi possível carregar os produtos."); }
   };
 
-  /* ---------- USUÁRIOS ---------- */
+   /* ---------- USUÁRIOS ---------- */
   let userSearch = "";
+  let usersCache = [];
   const whatsappLink = (phone) => {
     let d = String(phone || "").replace(/\D/g, "");
     if (d.length === 10 || d.length === 11) d = "55" + d;
@@ -556,6 +557,7 @@
     const wrap = $("usersTable");
     try {
       const { users } = await API.get(`/admin/users${userSearch ? `?q=${encodeURIComponent(userSearch)}` : ""}`);
+      usersCache = users;
       const me = API.user();
       wrap.innerHTML = users.length ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Situação</th><th>Pedidos</th><th>Último login</th><th>Desde</th><th></th></tr></thead><tbody>${users.map((u) => {
         const self = me && u.id === me.id;
@@ -582,7 +584,7 @@
         const id = Number(b.dataset.id);
         try {
           if (b.dataset.act === "orders") return openUserOrders(id, b.dataset.name);
-          if (b.dataset.act === "edit") { const u = users.find((x) => x.id === id); return openUserEdit(u); }
+          if (b.dataset.act === "edit") { const u = usersCache.find((x) => x.id === id); return openUserEdit(u); }
           if (b.dataset.act === "unlock") { await API.put(`/admin/users/${id}/unlock`, {}); toast("Conta desbloqueada.", "success"); return loaders.users(); }
           if (b.dataset.act === "admin") {
             const make = b.dataset.admin !== "true";
