@@ -41,12 +41,10 @@
 <script src="/js/main.js"></script>
 <script>
   // Número máximo de parcelas oferecidas no cartão (1 = só à vista).
-  // Só aumente depois de confirmar com a Plumify que o parcelamento está
-  // habilitado na sua conta e se há juros.
   const MAX_INSTALLMENTS = 1;
   const MIN_INSTALLMENT_VALUE = 50;
 
-  // 🔎 NOVO — limite da descrição "curta" na página. Acima disso mostra o botão.
+  // Limite da descrição "curta" na página. Acima disso mostra o botão.
   const DESCRIPTION_LIMIT = 280;
 
   let cardMode = "redirect"; // "form" = cartão digitado no site (Plumify) | "redirect" = Stripe
@@ -55,66 +53,64 @@
   let slideIndex = 0;
   let slideImages = [];
 
-  // 🔎 NOVO — bandeiras detectáveis pelo número do cartão (BIN/prefixo + comprimento).
-  // A ordem importa: Elo/Mastercard podem compartilhar prefixos com outras, então
-  // verificamos as mais específicas primeiro.
+  // ---------- Bandeiras de cartão ----------
+  // Detecta pela BIN/prefixo. Cada bandeira tem: nome, regex, tamanhos válidos
+  // e um SVG inline (data URL) para exibir o logo colorido no badge.
   const CARD_BRANDS = [
     {
       name: "visa",
       label: "Visa",
       test: (d) => /^4/.test(d),
-      lengths: [13, 16, 19],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#1A1F71"/><text x="24" y="11.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="9" fill="#fff" letter-spacing="1">VISA</text></svg>`,
     },
     {
       name: "mastercard",
       label: "Mastercard",
-      // 51-55 e 2221-2720
       test: (d) => {
         const n2 = Number(d.slice(0, 2));
         const n4 = Number(d.slice(0, 4));
         return (n2 >= 51 && n2 <= 55) || (n4 >= 2221 && n4 <= 2720);
       },
-      lengths: [16],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#000"/><circle cx="18" cy="8" r="6" fill="#EB001B"/><circle cx="30" cy="8" r="6" fill="#F79E1B"/><path d="M24 3.2a6 6 0 0 1 0 9.6 6 6 0 0 1 0-9.6z" fill="#FF5F00"/></svg>`,
     },
     {
       name: "amex",
       label: "Amex",
       test: (d) => /^3[47]/.test(d),
-      lengths: [15],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#2E77BC"/><text x="24" y="11.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="8" fill="#fff" letter-spacing="0.5">AMEX</text></svg>`,
     },
     {
       name: "elo",
       label: "Elo",
-      test: (d) =>
-        /^(4011|4312|4389|4514|4573|4576|5067|5090|6277|6362|6363|650|651|655)/.test(d),
-      lengths: [16],
+      test: (d) => /^(4011|4312|4389|4514|4573|4576|5067|5090|6277|6362|6363|650|651|655)/.test(d),
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#000"/><text x="24" y="11.5" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="9" fill="#FFCB05" letter-spacing="1">elo</text></svg>`,
     },
     {
       name: "hipercard",
       label: "Hipercard",
       test: (d) => /^(606282|3841)/.test(d),
-      lengths: [16],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#B3131B"/><text x="24" y="11" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="6" fill="#fff" letter-spacing="0.3">Hipercard</text></svg>`,
     },
     {
       name: "diners",
       label: "Diners",
       test: (d) => /^3(0[0-5]|[68])/.test(d),
-      lengths: [14, 16],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#0079BE"/><text x="24" y="11" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="6" fill="#fff">DINERS</text></svg>`,
     },
     {
       name: "discover",
       label: "Discover",
       test: (d) => /^(6011|65|64[4-9])/.test(d),
-      lengths: [16, 19],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 16"><rect width="48" height="16" rx="2" fill="#fff"/><circle cx="36" cy="8" r="5" fill="#F76B1C"/><text x="18" y="11" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="5.5" fill="#000">DISCOVER</text></svg>`,
     },
   ];
 
   function detectCardBrand(digits) {
     if (!digits) return null;
-    const ordered = CARD_BRANDS.slice().sort((a, b) => (b.test(digits) ? 1 : 0) - (a.test(digits) ? 1 : 0));
-    return ordered.find((b) => b.test(digits)) || null;
+    return CARD_BRANDS.find((b) => b.test(digits)) || null;
   }
 
+  // ---------- Slider de imagens ----------
   function renderSlider(images) {
     if (!images.length) return "";
     return `
@@ -152,8 +148,7 @@
     });
   }
 
-  // 🔎 NOVO — descrição com truncamento e botão "ver descrição completa".
-  // Usa o `shortDesc` como resumo e a `description` completa no expandido.
+  // ---------- Descrição expandível ----------
   function renderDescription(p) {
     const long = String(p.description || "");
     const short = String(p.shortDesc || "");
@@ -191,8 +186,7 @@
     });
   }
 
-  // 🔎 NOVO — busca de CEP via ViaCEP. Devolve o objeto com logradouro/bairro/localidade/uf
-  // ou null se o CEP não for encontrado. Se a rede falhar, devolve null (fallback manual).
+  // ---------- Busca de CEP (ViaCEP) ----------
   async function buscarCep(cepDigits) {
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
@@ -205,6 +199,12 @@
     }
   }
 
+  function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  // ---------- Render principal ----------
   function renderProduct(p) {
     const wrap = document.getElementById("productWrap");
     slideImages = [p.imageUrl, ...(p.images || [])].filter(Boolean);
@@ -268,12 +268,12 @@
               </button>
             </div>
 
+            <!-- Cartão (só no modo form, quando o cliente digita no site) -->
             <div id="cardFields" style="display:none;">
               <div class="field">
                 <label for="cardNumber">Número do cartão</label>
                 <div class="input-with-badge">
                   <input type="text" id="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000" />
-                  <!-- 🔎 NOVO: bandeira detectada -->
                   <span class="card-brand-badge" id="cardBrandBadge" aria-live="polite"></span>
                 </div>
               </div>
@@ -297,16 +297,18 @@
               </div>
             </div>
 
-            <div class="field" id="pixFields" style="display:none;">
+            <!-- CPF e telefone: sempre que o cliente for pagar no site (Pix OU cartão form) -->
+            <div class="field" id="cpfField" style="display:none;">
               <label for="cpf">CPF</label>
-              <input type="text" id="cpf" placeholder="Somente números" />
+              <input type="text" id="cpf" placeholder="Somente números" inputmode="numeric" maxlength="14" />
             </div>
             <div class="field" id="phoneField" style="display:none;">
               <label for="customerPhone">Telefone (com DDD)</label>
               <input type="tel" id="customerPhone" placeholder="(00) 00000-0000" />
             </div>
+
+            <!-- Endereço: só no Pix (cartão não pede endereço) -->
             <div id="addressFields" style="display:none;">
-              <!-- 🔎 NOVO: CEP com botão de busca -->
               <div class="field">
                 <label for="addrZip">CEP</label>
                 <div class="input-with-btn">
@@ -349,79 +351,49 @@
     `;
 
     if (slideImages.length > 1) bindSlider();
-
     bindDescription();
     setupInstallments(p.price);
     bindCardMasks();
     setupGate(p);
+    setupCepAutocomplete();
+    bindPaymentOptions();
 
+    document.getElementById("orderForm").addEventListener("submit", handleSubmit);
+  }
+
+  // ---------- Seleção de forma de pagamento ----------
+  // Regra nova:
+  //   • Pix                  → mostra CPF + telefone + endereço (CEP)
+  //   • Cartão (form/Plumify) → mostra CPF + telefone (sem endereço)
+  //   • Cartão (redirect/Stripe) → não mostra nada (só vai pro Stripe)
+  function bindPaymentOptions() {
     document.querySelectorAll(".pay-option").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".pay-option").forEach((b) => b.classList.remove("selected"));
         btn.classList.add("selected");
         selectedPayment = btn.dataset.method;
+
         const isPix = selectedPayment === "pix";
         const isCardForm = selectedPayment === "credit_card" && cardMode === "form";
-        const needsBilling = isPix || isCardForm;
-        document.getElementById("pixFields").style.display = needsBilling ? "block" : "none";
-        document.getElementById("phoneField").style.display = needsBilling ? "block" : "none";
-        document.getElementById("addressFields").style.display = needsBilling ? "block" : "none";
-        document.getElementById("cardFields").style.display = isCardForm ? "block" : "none";
+        const needsBilling = isPix || isCardForm; // CPF + telefone
+
+        const setDisplay = (id, show) => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = show ? "block" : "none";
+        };
+        setDisplay("cpfField", needsBilling);
+        setDisplay("phoneField", needsBilling);
+        setDisplay("addressFields", isPix); // endereço SÓ no Pix
+        setDisplay("cardFields", isCardForm);
+
         const submitBtn = document.getElementById("orderSubmit");
         submitBtn.disabled = false;
         submitBtn.textContent = submitLabel();
       });
     });
-
-    document.getElementById("orderForm").addEventListener("submit", handleSubmit);
-
-    // 🔎 NOVO: busca de CEP
-    const zipInput = document.getElementById("addrZip");
-    const zipSearch = document.getElementById("addrZipSearch");
-    const zipHint = document.getElementById("addrZipHint");
-
-    function formatCep(v) {
-      const d = String(v || "").replace(/\D/g, "").slice(0, 8);
-      return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
-    }
-    zipInput.addEventListener("input", () => { zipInput.value = formatCep(zipInput.value); });
-
-    async function doZipLookup() {
-      const digits = zipInput.value.replace(/\D/g, "");
-      zipHint.textContent = "";
-      zipHint.style.color = "";
-      if (digits.length !== 8) {
-        zipHint.textContent = "Digite um CEP com 8 dígitos.";
-        zipHint.style.color = "#ffa8b4";
-        return;
-      }
-      zipSearch.disabled = true;
-      const original = zipSearch.textContent;
-      zipSearch.textContent = "Buscando...";
-      const data = await buscarCep(digits);
-      zipSearch.disabled = false;
-      zipSearch.textContent = original;
-      if (!data) {
-        zipHint.textContent = "CEP não encontrado. Preencha o endereço manualmente.";
-        zipHint.style.color = "#ffa8b4";
-        return;
-      }
-      if (data.logradouro) document.getElementById("addrStreet").value = data.logradouro;
-      if (data.bairro) document.getElementById("addrNeighborhood").value = data.bairro;
-      if (data.localidade) document.getElementById("addrCity").value = data.localidade;
-      if (data.uf) document.getElementById("addrState").value = data.uf;
-      zipHint.textContent = "Endereço preenchido. Confira o número e complemento.";
-      zipHint.style.color = "var(--ok)";
-      document.getElementById("addrNumber").focus();
-    }
-    zipSearch.addEventListener("click", doZipLookup);
-    zipInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); doZipLookup(); }
-    });
   }
 
-
-  // ---------- trava de login: comprar e baixar só logado ----------
+  // ---------- Trava de login ----------
   function setupGate(p) {
     const freeBtn = document.getElementById("freeDownloadBtn");
     if (freeBtn) freeBtn.addEventListener("click", () => NB.download(p.id, freeBtn));
@@ -436,7 +408,6 @@
     const ownedBtn = document.getElementById("ownedDownloadBtn");
     if (ownedBtn) ownedBtn.addEventListener("click", () => NB.download(p.id, ownedBtn));
 
-    // Quem já comprou vê o botão de baixar no lugar do checkout.
     if (!p.isFree && isLoggedIn()) {
       API.get("/library").then(({ sites }) => {
         const owned = sites.find((x) => x.id === p.id && x.source === "purchase");
@@ -478,7 +449,7 @@
     document.getElementById("installmentsField").style.display = options.length > 1 ? "block" : "none";
   }
 
-  // 🔎 NOVO — máscara do cartão + detecção da bandeira + limpeza visual da bandeira
+  // ---------- Máscara + bandeira do cartão ----------
   function bindCardMasks() {
     const num = document.getElementById("cardNumber");
     const exp = document.getElementById("cardExp");
@@ -490,11 +461,13 @@
       const digits = num.value.replace(/\D/g, "");
       const brand = detectCardBrand(digits);
       if (brand) {
-        brandBadge.textContent = brand.label;
+        brandBadge.innerHTML = `<img src="data:image/svg+xml;utf8,${encodeURIComponent(brand.svg)}" alt="${brand.label}" class="brand-logo" />`;
         brandBadge.className = "card-brand-badge known " + brand.name;
+        brandBadge.title = brand.label;
       } else {
-        brandBadge.textContent = "";
+        brandBadge.innerHTML = "";
         brandBadge.className = "card-brand-badge";
+        brandBadge.title = "";
       }
     }
 
@@ -511,6 +484,59 @@
     });
 
     updateBrand();
+  }
+
+  // ---------- Busca automática de CEP ----------
+  function setupCepAutocomplete() {
+    const zipInput = document.getElementById("addrZip");
+    const zipSearch = document.getElementById("addrZipSearch");
+    const zipHint = document.getElementById("addrZipHint");
+    if (!zipInput) return;
+
+    function formatCep(v) {
+      const d = String(v || "").replace(/\D/g, "").slice(0, 8);
+      return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+    }
+
+    let lastDigits = "";
+    async function doLookup() {
+      const digits = zipInput.value.replace(/\D/g, "");
+      if (digits.length !== 8 || digits === lastDigits) return;
+      lastDigits = digits;
+
+      zipHint.textContent = "Buscando CEP...";
+      zipHint.style.color = "var(--muted)";
+
+      const data = await buscarCep(digits);
+      if (!data) {
+        zipHint.textContent = "CEP não encontrado. Preencha o endereço manualmente.";
+        zipHint.style.color = "#ffa8b4";
+        return;
+      }
+      if (data.logradouro) document.getElementById("addrStreet").value = data.logradouro;
+      if (data.bairro) document.getElementById("addrNeighborhood").value = data.bairro;
+      if (data.localidade) document.getElementById("addrCity").value = data.localidade;
+      if (data.uf) document.getElementById("addrState").value = data.uf;
+      zipHint.textContent = "Endereço preenchido. Confira o número e complemento.";
+      zipHint.style.color = "var(--ok)";
+      document.getElementById("addrNumber").focus();
+    }
+
+    // Busca automática: ao chegar em 8 dígitos, dispara sozinho (com debounce)
+    const debouncedLookup = debounce(doLookup, 400);
+
+    zipInput.addEventListener("input", () => {
+      zipInput.value = formatCep(zipInput.value);
+      lastDigits = ""; // permite buscar de novo se apagar/editar
+      if (zipInput.value.replace(/\D/g, "").length === 8) {
+        debouncedLookup();
+      } else {
+        zipHint.textContent = "";
+      }
+    });
+
+    // Botão continua funcionando manualmente
+    zipSearch.addEventListener("click", () => { lastDigits = ""; doLookup(); });
   }
 
   function luhnOk(digits) {
@@ -530,9 +556,10 @@
       if (el) el.value = "";
     });
     const brandBadge = document.getElementById("cardBrandBadge");
-    if (brandBadge) { brandBadge.textContent = ""; brandBadge.className = "card-brand-badge"; }
+    if (brandBadge) { brandBadge.innerHTML = ""; brandBadge.className = "card-brand-badge"; }
   }
 
+  // ---------- Submit ----------
   async function handleSubmit(e) {
     e.preventDefault();
     const errorBox = document.getElementById("orderError");
@@ -555,11 +582,25 @@
       customerEmail,
     };
 
+    const isPix = selectedPayment === "pix";
     const isCardForm = selectedPayment === "credit_card" && cardMode === "form";
+    const needsBilling = isPix || isCardForm;
 
-    if (selectedPayment === "pix" || isCardForm) {
+    // CPF + telefone: sempre que for Pix ou cartão digitado no site
+    if (needsBilling) {
       const cpf = document.getElementById("cpf").value.trim();
       const customerPhone = document.getElementById("customerPhone").value.trim();
+      if (!cpf || !customerPhone) {
+        errorBox.textContent = "Preencha CPF e telefone para continuar.";
+        errorBox.classList.add("error");
+        return;
+      }
+      payload.cpf = cpf;
+      payload.customerPhone = customerPhone;
+    }
+
+    // Endereço: SÓ no Pix (o backend do cartão não exige endereço nesta versão)
+    if (isPix) {
       const address = {
         zipCode: document.getElementById("addrZip").value.trim(),
         street: document.getElementById("addrStreet").value.trim(),
@@ -568,13 +609,11 @@
         city: document.getElementById("addrCity").value.trim(),
         state: document.getElementById("addrState").value.trim(),
       };
-      if (!cpf || !customerPhone || Object.values(address).some((v) => !v)) {
-        errorBox.textContent = "Preencha CPF, telefone e o endereço completo para continuar.";
+      if (Object.values(address).some((v) => !v)) {
+        errorBox.textContent = "Preencha o endereço completo para gerar o Pix.";
         errorBox.classList.add("error");
         return;
       }
-      payload.cpf = cpf;
-      payload.customerPhone = customerPhone;
       payload.address = address;
     }
 
@@ -610,12 +649,11 @@
       const data = await API.post("/orders", payload);
 
       if (selectedPayment === "credit_card") {
-        // Stripe devolve a URL do checkout hospedado; no cartão direto (Plumify)
-        // o pedido já volta com o status e vamos para a página de confirmação.
         window.location.href = data.checkoutUrl || `/pedido-confirmado.html?order=${data.order.id}`;
         return;
       }
 
+      // Pix
       document.getElementById("orderForm").style.display = "none";
       const resultBox = document.getElementById("pixResult");
       resultBox.style.display = "block";
@@ -634,10 +672,11 @@
       submitBtn.disabled = false;
       submitBtn.textContent = submitLabel();
     } finally {
-      clearCardFields(); // não deixa dados do cartão parados na página
+      clearCardFields();
     }
   }
 
+  // ---------- Init ----------
   async function init() {
     const slug = qs("slug");
     if (!slug) {
