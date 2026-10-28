@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body class="admin-page">
-
+<!-- SITE REAL DE VENDAS DE TELA FAKE -->
 <div class="admin-shell" id="adminShell" style="display:none;">
   <aside class="admin-side">
     <div class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></div>
@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <!-- DASHBOARD -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-dashboard">
       <div class="stat-grid" id="statGrid"></div>
       <h3>Receita — últimos 30 dias</h3>
@@ -50,7 +50,7 @@
       <div class="table-wrap" id="dashboardOrders"></div>
     </section>
 
-    <!-- PEDIDOS -->
+    <!-- SITE REAL DE VENDAS DE TELA FAKE -->>
     <section class="tab-panel" id="tab-orders" style="display:none;">
       <div class="tabs" id="orderFilters">
         <button type="button" data-status="" class="active">Todos</button>
@@ -68,7 +68,7 @@
       <div class="table-wrap" id="ordersTable"></div>
     </section>
 
-    <!-- PRODUTOS -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-products" style="display:none;">
       <div class="admin-toolbar"><button type="button" class="btn btn-primary" id="newProduct">+ Novo produto</button></div>
 
@@ -114,13 +114,13 @@
       <div class="table-wrap" id="productsTable"></div>
     </section>
 
-    <!-- USUÁRIOS -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-users" style="display:none;">
       <div class="admin-toolbar"><input type="text" id="userSearch" placeholder="Buscar por nome ou e-mail..." /></div>
       <div class="table-wrap" id="usersTable"></div>
     </section>
 
-    <!-- VISITAS -->
+    <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-visits" style="display:none;">
       <div class="stat-grid" id="visitStats"></div>
       <div class="panel"><h3>Páginas mais vistas</h3><p class="sub">Calculado sobre as últimas 200 visitas registradas.</p><div id="topPages"></div></div>
@@ -128,21 +128,21 @@
       <div class="table-wrap" id="visitsTable"></div>
     </section>
 
-    <!-- WEBHOOKS -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-webhooks" style="display:none;">
       <p class="helper" style="margin-top:0;">Eventos recebidos da gateway de pagamento (os mais recentes primeiro).</p>
       <div class="admin-toolbar"><button type="button" class="btn btn-danger" id="clearWebhooks">Limpar log de webhooks</button></div>
       <div class="table-wrap" id="webhooksTable"></div>
     </section>
 
-    <!-- AUDITORIA -->
+    <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-audit" style="display:none;">
       <p class="helper" style="margin-top:0;">Ações administrativas: quem fez, o quê, quando e de qual IP.</p>
       <div class="admin-toolbar"><button type="button" class="btn btn-danger" id="clearAudit">Limpar log de auditoria</button></div>
       <div class="table-wrap" id="auditTable"></div>
     </section>
 
-    <!-- APARÊNCIA -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-appearance" style="display:none;">
       <div class="panel" style="max-width:640px;">
         <h3>Cor de destaque do site</h3>
@@ -160,7 +160,7 @@
       </div>
     </section>
 
-    <!-- CONFIGURAÇÕES -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-settings" style="display:none;">
       <div class="panel" style="max-width:760px;">
         <h3>Site</h3>
@@ -196,7 +196,8 @@
   </main>
 </div>
 
-<!-- LOGIN DO PAINEL -->
+   <!-- SITE REAL DE VENDAS DE TELA FAKE -->
+
 <div class="admin-login" id="adminLoginGate" style="display:none;">
   <img class="crest" src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" style="width:96px;margin:0 auto 18px;border-radius:10px;" />
   <div class="eyebrow-num center-text">Acesso restrito</div>
@@ -212,7 +213,7 @@
   </div>
 </div>
 
-<!-- MODAIS -->
+  <!-- SITE REAL DE VENDAS DE TELA FAKE -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-box confirm-box">
     <h3 id="confirmTitle">Confirmar</h3>
@@ -255,7 +256,7 @@
   const emptyRow = (text) => `<div class="empty-state">${esc(text)}</div>`;
   const debounce = (fn, ms = 300) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
-  /* ---------- confirmação em modal (no lugar do confirm() do navegador) ---------- */
+  /* ---------- site real para vendas de tela fake ---------- */
   function ask({ title = "Confirmar", message = "", confirmText = "Confirmar", danger = false }) {
     return new Promise((resolve) => {
       const modal = $("confirmModal");
@@ -278,7 +279,7 @@
     if (e.key === "Escape") document.querySelectorAll(".modal-overlay.open").forEach((m) => { if (m.id === "confirmModal") $("confirmNo").click(); else m.classList.remove("open"); });
   });
 
-  /* ---------- acesso ---------- */
+  /* ---------- root ---------- */
   function showGate(message) {
     $("adminShell").style.display = "none";
     $("adminLoginGate").style.display = "block";
@@ -291,7 +292,7 @@
     const user = API.user();
     if (!user || !user.isAdmin || !API.token()) return showGate();
     try {
-      await API.get("/admin/stats"); // confere no servidor, não só no que ficou salvo no navegador
+      await API.get("/admin/stats");
     } catch (e) {
       API.setToken(null); API.setUser(null);
       return showGate();
@@ -321,7 +322,7 @@
   });
   $("logoutBtn").addEventListener("click", (e) => { e.preventDefault(); API.logout("/admin.html"); });
 
-  /* ---------- abas ---------- */
+  /* ----------abanas ---------- */
   const loaders = {};
   function showTab(name) {
     document.querySelectorAll("#sideNav [data-tab]").forEach((a) => a.classList.toggle("active", a.dataset.tab === name));
@@ -333,7 +334,7 @@
   }
   document.querySelectorAll("#sideNav [data-tab]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); showTab(a.dataset.tab); }));
 
-  /* ---------- tabelas ---------- */
+  /* ---------- tab ---------- */
   function ordersTable(orders, editable) {
     return `<table class="admin-table"><thead><tr><th>#</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Data</th></tr></thead><tbody>${orders.map((o) => `
       <tr>
@@ -372,7 +373,7 @@
     });
   }
 
-  /* ---------- DASHBOARD ---------- */
+  /* ---------- dasz ---------- */
   loaders.dashboard = async () => {
     try {
       const s = await API.get("/admin/stats");
@@ -395,7 +396,7 @@
     } catch (e) { $("dashboardOrders").innerHTML = emptyRow("Não foi possível carregar os pedidos."); }
   };
 
-  /* ---------- PEDIDOS ---------- */
+  /* ---------- ped ---------- */
   let orderFilter = "", orderSearch = "";
   function ordersQuery() {
     const p = new URLSearchParams();
@@ -424,7 +425,7 @@
     catch (e) { toast(e.message || "Não foi possível limpar.", "error"); }
   });
 
-  /* ---------- PRODUTOS ---------- */
+  /* ---------- protuct ---------- */
   let gallery = [];
   let productsCache = [];
   function parseBRL(v) {
@@ -545,7 +546,7 @@
     } catch (e) { wrap.innerHTML = emptyRow("Não foi possível carregar os produtos."); }
   };
 
-   /* ---------- USUÁRIOS ---------- */
+   /* ---------- users ---------- */
   let userSearch = "";
   let usersCache = [];
   const whatsappLink = (phone) => {
@@ -625,7 +626,7 @@
     } catch (e) { toast(e.message || "Não foi possível salvar.", "error"); }
   });
 
-  /* ---------- VISITAS (única fonte de dados de visita) ---------- */
+  /* ---------- ss ---------- */
   loaders.visits = async () => {
     try {
       const [{ visits }, stats] = await Promise.all([API.get("/admin/visits"), API.get("/admin/stats")]);
@@ -650,7 +651,7 @@
     try { const r = await API.del("/admin/visits"); toast(`${r.count} registro(s) removido(s).`, "success"); loaders.visits(); } catch (e) { toast(e.message, "error"); }
   });
 
-  /* ---------- WEBHOOKS / AUDITORIA ---------- */
+  /* ---------- das ---------- */
   loaders.webhooks = async () => {
     try {
       const { webhooks } = await API.get("/admin/webhooks");
@@ -673,7 +674,7 @@
     try { const r = await API.del("/admin/audit-log"); toast(`${r.count} registro(s) removido(s).`, "success"); loaders.audit(); } catch (e) { toast(e.message, "error"); }
   });
 
-  /* ---------- APARÊNCIA ---------- */
+  /* ---------- ara ---------- */
   const PRESETS = [["Ouro", "#c9a45c"], ["Prata", "#b8bcc4"], ["Esmeralda", "#4fae86"], ["Safira", "#5b8def"], ["Rubi", "#d6546a"], ["Cobre", "#c9825c"]];
   function shade(hex, amount) {
     const n = parseInt(hex.slice(1), 16), target = amount >= 0 ? 255 : 0, k = Math.abs(amount);
@@ -703,7 +704,7 @@
     try { const { settings } = await API.get("/admin/settings"); if (settings.themeAccent) setAccent(settings.themeAccent); } catch (e) { /* mantém */ }
   };
 
-  /* ---------- CONFIGURAÇÕES ---------- */
+  /* ---------- config  ---------- */
   loaders.settings = async () => {
     try {
       const { settings } = await API.get("/admin/settings");
