@@ -36,6 +36,27 @@ function slugify(text) {
     .replace(/(^-|-$)/g, "");
 }
 
+// Nunca expõe o link do arquivo nas rotas públicas: só diz se existe e se é grátis.
+function toPublic(product) {
+  const { downloadUrl, ...rest } = product;
+  return { ...rest, hasDownload: !!downloadUrl, isFree: Number(product.price) <= 0 };
+}
+
+// Aceita só links http(s) (ou caminho local começando com "/"); vazio vira null.
+function cleanUrl(value) {
+  if (value === undefined) return undefined;
+  const v = String(value || "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v) || (v.startsWith("/") && !v.startsWith("//"))) return v.slice(0, 1000);
+  throw new Error("INVALID_URL");
+}
+
+function cleanPrice(value) {
+  const n = Number(String(value).replace(",", "."));
+  if (!Number.isFinite(n) || n < 0) throw new Error("INVALID_PRICE");
+  return Math.round(n * 100) / 100;
+}
+
 // GET /api/products?q=busca -> lista pública (com busca opcional)
 router.get("/", async (req, res) => {
   try {
@@ -56,7 +77,7 @@ router.get("/", async (req, res) => {
       where,
       orderBy: { createdAt: "desc" },
     });
-    res.json({ products });
+    res.json({ products: products.map(toPublic) });
   } catch (err) {
     console.error("Erro ao listar produtos:", err);
     res.status(500).json({ error: "Não foi possível carregar os produtos." });
@@ -72,7 +93,7 @@ router.get("/:slug", async (req, res) => {
     if (!product || !product.active) {
       return res.status(404).json({ error: "Produto não encontrado." });
     }
-    res.json({ product });
+    res.json({ product: toPublic(product) });
   } catch (err) {
     console.error("Erro ao buscar produto:", err);
     res.status(500).json({ error: "Não foi possível carregar o produto." });
@@ -82,7 +103,7 @@ router.get("/:slug", async (req, res) => {
 // POST /api/products -> criar (admin)
 router.post("/", requireAdmin, async (req, res) => {
   try {
-    const { name, shortDesc, description, price, imageUrl, images, features } = req.body;
+    const { name, shortDesc, description, price, imageUrl, images, features, downloadUrl } = req.body;
     if (!name || !shortDesc || !description || price == null) {
       return res.status(400).json({ error: "Preencha nome, descrição curta, descrição e preço." });
     }
@@ -96,8 +117,9 @@ router.post("/", requireAdmin, async (req, res) => {
         slug,
         shortDesc,
         description,
-        price: Number(price),
-        imageUrl: imageUrl || null,
+        price: cleanPrice(price),
+        imageUrl: cleanUrl(imageUrl) || null,
+        downloadUrl: cleanUrl(downloadUrl) || null,
         images: Array.isArray(images) ? images.filter(Boolean).slice(0, 12) : [],
         features: Array.isArray(features) ? features : [],
       },
@@ -105,6 +127,8 @@ router.post("/", requireAdmin, async (req, res) => {
     await logAction(req, "product.create", { targetType: "Product", targetId: product.id, detail: { name } });
     res.status(201).json({ product });
   } catch (err) {
+    if (err.message === "INVALID_URL") return res.status(400).json({ error: "Links de imagem e de download precisam começar com http:// ou https://." });
+    if (err.message === "INVALID_PRICE") return res.status(400).json({ error: "Preço inválido. Use 0 para produto grátis." });
     console.error("Erro ao criar produto:", err);
     res.status(500).json({ error: "Não foi possível criar o produto." });
   }
@@ -114,15 +138,16 @@ router.post("/", requireAdmin, async (req, res) => {
 router.put("/:id", requireAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { name, shortDesc, description, price, imageUrl, images, features, active } = req.body;
+    const { name, shortDesc, description, price, imageUrl, images, features, active, downloadUrl } = req.body;
     const product = await prisma.product.update({
       where: { id },
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(shortDesc !== undefined ? { shortDesc } : {}),
         ...(description !== undefined ? { description } : {}),
-        ...(price !== undefined ? { price: Number(price) } : {}),
-        ...(imageUrl !== undefined ? { imageUrl } : {}),
+        ...(price !== undefined ? { price: cleanPrice(price) } : {}),
+        ...(imageUrl !== undefined ? { imageUrl: cleanUrl(imageUrl) } : {}),
+        ...(downloadUrl !== undefined ? { downloadUrl: cleanUrl(downloadUrl) } : {}),
         ...(images !== undefined ? { images: Array.isArray(images) ? images.filter(Boolean).slice(0, 12) : [] } : {}),
         ...(features !== undefined ? { features } : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
@@ -131,6 +156,8 @@ router.put("/:id", requireAdmin, async (req, res) => {
     await logAction(req, "product.update", { targetType: "Product", targetId: id });
     res.json({ product });
   } catch (err) {
+    if (err.message === "INVALID_URL") return res.status(400).json({ error: "Links de imagem e de download precisam começar com http:// ou https://." });
+    if (err.message === "INVALID_PRICE") return res.status(400).json({ error: "Preço inválido. Use 0 para produto grátis." });
     console.error("Erro ao editar produto:", err);
     res.status(500).json({ error: "Não foi possível editar o produto." });
   }

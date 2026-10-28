@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Criar conta — NULLBANKER</title>
-<link rel="icon" href="/img/logo.svg" />
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <header class="topbar">
   <div class="wrap">
-    <a href="/" class="logo"><img src="/img/logo.svg" alt="NULLBANKER" />NULLBANKER</a>
+    <a href="/" class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></a>
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html">Produtos</a>
@@ -24,7 +24,8 @@
 
 <section style="padding-top:80px;border-bottom:none;">
   <div class="wrap auth-wrap">
-    <div class="eyebrow-num center-text">acesso</div>
+    <img class="auth-modal-logo" src="/img/logo.png" data-fallback="/img/logo.svg" alt="NullBanker" style="width:84px;height:84px;margin:0 auto 18px;" />
+    <div class="eyebrow-num center-text">Acesso</div>
     <h2 class="center-text">Criar conta</h2>
     <div class="auth-box mt-40">
       <div class="msg" id="regError"></div>
@@ -49,7 +50,7 @@
         <button type="submit" class="btn btn-primary btn-block" id="regBtn">Criar conta</button>
       </form>
     </div>
-    <div class="auth-switch">Já tem conta? <a href="/login.html">Entrar</a></div>
+    <div class="auth-switch">Já tem conta? <a href="/login.html" id="toLogin">Entrar</a></div>
   </div>
 </section>
 
@@ -74,7 +75,7 @@
       });
       API.setToken(data.token);
       API.setUser(data.user);
-      window.location.href = "/";
+      window.location.href = safeNext(qs("next")) || "/";
     } catch (err) {
       errorBox.textContent = err.message || "Não foi possível criar a conta.";
       errorBox.classList.add("error");
@@ -82,6 +83,8 @@
       btn.textContent = "Criar conta";
     }
   });
+  const nextParam = qs("next");
+  if (nextParam) document.getElementById("toLogin").href = "/login.html?next=" + encodeURIComponent(nextParam);
 </script>
 </body>
 </html>

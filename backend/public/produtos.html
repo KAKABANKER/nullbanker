@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Produtos — NULLBANKER</title>
-<link rel="icon" href="/img/logo.svg" />
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <header class="topbar">
   <div class="wrap">
-    <a href="/" class="logo"><img src="/img/logo.svg" alt="NULLBANKER" />NULLBANKER</a>
+    <a href="/" class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></a>
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html" class="active">Produtos</a>
@@ -61,6 +61,7 @@
       .map((p, i) => `
         <a class="product-card" href="/produto.html?slug=${encodeURIComponent(p.slug)}">
           <div class="product-card-media">
+            ${p.isFree ? '<span class="badge-free">GRÁTIS</span>' : ""}
             ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" />` : `<img class="placeholder-art" src="/img/fedora.svg" alt="" />`}
           </div>
           <div class="product-card-body">
@@ -68,8 +69,8 @@
             <span class="statement-name">${esc(p.name)}</span>
             <div class="statement-desc">${esc(p.shortDesc)}</div>
             <div class="product-card-footer">
-              <span class="statement-price">${formatBRL(p.price)}</span>
-              <span>Ver detalhes →</span>
+              ${p.isFree ? '<span class="price-free">GRÁTIS</span>' : `<span class="statement-price">${formatBRL(p.price)}</span>`}
+              <span>${p.isFree ? "Baixar grátis →" : "Ver detalhes →"}</span>
             </div>
           </div>
         </a>

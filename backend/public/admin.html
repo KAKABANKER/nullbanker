@@ -3,929 +3,738 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
 <title>Painel — NULLBANKER</title>
-<link rel="icon" href="/img/logo.svg" />
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body class="admin-page">
 
 <div class="admin-shell" id="adminShell" style="display:none;">
   <aside class="admin-side">
-    <div class="logo"><img src="/img/logo.svg" alt="NULLBANKER" />NULLBANKER</div>
-    <nav>
-      <a href="#" data-tab="dashboard" class="active">Dashboard</a>
-      <a href="#" data-tab="orders">Pedidos</a>
-      <a href="#" data-tab="visits">Visitantes</a>
-      <a href="#" data-tab="webhooks">Webhooks</a>
-      <a href="#" data-tab="products">Produtos</a>
-      <a href="#" data-tab="users">Usuários</a>
-      <a href="#" data-tab="audit">Auditoria</a>
-      <a href="#" data-tab="settings">Configurações</a>
-      <a href="/">Voltar ao site</a>
-      <a href="#" id="logoutBtn">Sair</a>
+    <div class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></div>
+    <nav id="sideNav">
+      <div class="nav-group">Visão geral</div>
+      <a href="#dashboard" data-tab="dashboard" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a>
+      <div class="nav-group">Vendas</div>
+      <a href="#orders" data-tab="orders"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.7 11.6a2 2 0 0 0 2 1.4h8.1a2 2 0 0 0 2-1.5L22 7H6"/></svg>Pedidos</a>
+      <a href="#products" data-tab="products"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Produtos</a>
+      <div class="nav-group">Pessoas</div>
+      <a href="#users" data-tab="users"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M19 21c0-2.6-1.4-4.6-3.5-5.6"/></svg>Usuários</a>
+      <a href="#visits" data-tab="visits"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Visitas</a>
+      <div class="nav-group">Sistema</div>
+      <a href="#webhooks" data-tab="webhooks"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Webhooks</a>
+      <a href="#audit" data-tab="audit"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Auditoria</a>
+      <a href="#appearance" data-tab="appearance"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Aparência</a>
+      <a href="#settings" data-tab="settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Configurações</a>
+      <div class="nav-group">Conta</div>
+      <a href="/"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Ver o site</a>
+      <a href="#" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Sair</a>
     </nav>
   </aside>
 
   <main class="admin-main">
     <div class="admin-topline">
       <div>
-        <div class="eyebrow-num" id="adminGreeting">painel administrativo</div>
+        <div class="eyebrow-num" id="adminGreeting">painel</div>
         <h2 id="tabTitle">Dashboard</h2>
       </div>
     </div>
 
-    <div id="tab-dashboard" class="tab-panel">
-      <div class="stat-grid">
-        <div class="stat-cell"><div class="label">RECEITA (pago)</div><div class="value" id="statRevenue">—</div></div>
-        <div class="stat-cell"><div class="label">PEDIDOS</div><div class="value" id="statOrders">—</div></div>
-        <div class="stat-cell"><div class="label">PENDENTES</div><div class="value" id="statPending">—</div></div>
-        <div class="stat-cell"><div class="label">VISITANTES (30d)</div><div class="value" id="statVisits">—</div></div>
-        <div class="stat-cell"><div class="label">PRODUTOS</div><div class="value" id="statProducts">—</div></div>
-      </div>
+    <!-- DASHBOARD -->
+    <section class="tab-panel" id="tab-dashboard">
+      <div class="stat-grid" id="statGrid"></div>
       <h3>Receita — últimos 30 dias</h3>
-      <div id="revenueChart" class="bar-chart"><div class="empty-state">carregando...</div></div>
+      <div id="revenueChart" class="bar-chart"></div>
       <h3>Últimos pedidos</h3>
-      <div id="dashboardOrders"><div class="empty-state">carregando...</div></div>
-    </div>
+      <div class="table-wrap" id="dashboardOrders"></div>
+    </section>
 
-    <div id="tab-orders" class="tab-panel" style="display:none;">
-      <div class="tabs" id="orderFilterTabs">
-        <button data-status="" class="active">Todos</button>
-        <button data-status="paid">Pagos</button>
-        <button data-status="pending">Pendentes</button>
-        <button data-status="failed">Falhos</button>
+    <!-- PEDIDOS -->
+    <section class="tab-panel" id="tab-orders" style="display:none;">
+      <div class="tabs" id="orderFilters">
+        <button type="button" data-status="" class="active">Todos</button>
+        <button type="button" data-status="paid">Pagos</button>
+        <button type="button" data-status="pending">Pendentes</button>
+        <button type="button" data-status="failed">Falhos</button>
+        <button type="button" data-status="refunded">Reembolsados</button>
       </div>
       <div class="admin-toolbar">
-        <input type="text" id="orderSearchInput" placeholder="Buscar por cliente, e-mail ou ID da transação..." />
-        <a href="#" id="exportOrdersBtn" class="btn btn-outline">Exportar CSV</a>
-        <button id="cleanupOrdersBtn" class="btn btn-danger">Limpar falhos/cancelados</button>
+        <input type="text" id="orderSearch" placeholder="Buscar por cliente, e-mail ou ID da transação..." />
+        <button type="button" class="btn btn-outline" id="exportOrders">Exportar CSV</button>
+        <button type="button" class="btn btn-danger" id="cleanupOrders">Limpar falhos/cancelados</button>
       </div>
-      <div id="ordersTableWrap"><div class="empty-state">carregando...</div></div>
-    </div>
+      <p class="helper">Reembolso: o estorno do dinheiro é feito no painel da Plumify. Aqui você marca o pedido como "Reembolsado" (o cliente perde o acesso ao download).</p>
+      <div class="table-wrap" id="ordersTable"></div>
+    </section>
 
-    <div id="tab-visits" class="tab-panel" style="display:none;">
-      <div class="admin-toolbar">
-        <button id="clearVisitsBtn" class="btn btn-danger">Limpar todas as visitas</button>
-      </div>
-      <div id="visitsTableWrap"><div class="empty-state">carregando...</div></div>
-    </div>
+    <!-- PRODUTOS -->
+    <section class="tab-panel" id="tab-products" style="display:none;">
+      <div class="admin-toolbar"><button type="button" class="btn btn-primary" id="newProduct">+ Novo produto</button></div>
 
-    <div id="tab-webhooks" class="tab-panel" style="display:none;">
-      <p class="helper" style="margin-top:0;">Eventos brutos recebidos das gateways de pagamento (Plumify, e Stripe/Mercado Pago quando usados como alternativa).</p>
-      <div class="admin-toolbar">
-        <button id="clearWebhooksBtn" class="btn btn-danger">Limpar log de webhooks</button>
-      </div>
-      <div id="webhooksTableWrap"><div class="empty-state">carregando...</div></div>
-    </div>
-
-    <div id="tab-products" class="tab-panel" style="display:none;">
-      <button class="btn btn-primary" id="newProductBtn" style="margin-bottom:24px;">+ Novo produto</button>
-      <div id="productForm" style="display:none;margin-bottom:32px;" class="ledger">
-        <div class="ledger-head"><span id="productFormTitle">Novo produto</span><span></span></div>
-        <div style="padding:20px;">
-          <input type="hidden" id="pId" />
+      <div class="panel" id="productPanel" style="display:none;">
+        <h3 id="productPanelTitle">Novo produto</h3>
+        <p class="sub">Preencha os dados do site à venda (ou grátis). O link do arquivo fica privado: só quem comprou (ou, nos grátis, quem estiver logado) consegue baixar.</p>
+        <input type="hidden" id="pId" />
+        <div class="form-grid">
+          <div class="field"><label for="pName">Nome</label><input type="text" id="pName" maxlength="120" /></div>
+          <div class="field"><label for="pShort">Descrição curta</label><input type="text" id="pShort" maxlength="200" /></div>
+          <div class="field full"><label for="pDesc">Descrição completa</label><textarea id="pDesc" rows="4"></textarea></div>
           <div class="field">
-            <label>URL da imagem de capa (aparece na listagem de produtos)</label>
-            <input type="text" id="pImageUrl" placeholder="https://..." />
-            <div class="image-preview-box" id="imagePreviewBox"></div>
+            <label for="pPrice">Preço (R$)</label>
+            <input type="text" id="pPrice" inputmode="decimal" placeholder="Ex: 497,00" />
+            <label class="check-row"><input type="checkbox" id="pFree" /> Produto grátis (exige login para baixar)</label>
           </div>
-          <div class="field"><label>Nome</label><input type="text" id="pName" /></div>
-          <div class="field"><label>Descrição curta</label><input type="text" id="pShortDesc" /></div>
-          <div class="field"><label>Descrição completa</label><textarea id="pDescription" rows="4"></textarea></div>
-          <div class="field"><label>Preço (R$)</label><input type="text" id="pPrice" /></div>
           <div class="field">
-            <label>Galeria de fotos (aparece em slide na página do produto)</label>
+            <label for="pDownload">Link do arquivo para download</label>
+            <input type="text" id="pDownload" placeholder="https://... (Drive, Dropbox, Mega, R2...)" />
+            <p class="helper" style="margin:8px 0 0;">Nunca aparece no site. É entregue só depois de conferir a compra.</p>
+          </div>
+          <div class="field full">
+            <label for="pImage">Imagem de capa (link)</label>
+            <input type="text" id="pImage" placeholder="https://..." />
+            <div class="image-preview-box" id="imagePreview"></div>
+          </div>
+          <div class="field full">
+            <label>Galeria de fotos (slide na página do produto)</label>
             <div class="gallery-grid" id="galleryGrid"></div>
-            <div style="display:flex;gap:10px;margin-top:10px;">
-              <input type="text" id="pGalleryUrlInput" placeholder="https://... (cole o link da foto)" />
-              <button type="button" class="btn btn-outline" id="addGalleryImageBtn">+ Adicionar</button>
+            <div class="admin-toolbar" style="margin:10px 0 0;">
+              <input type="text" id="pGalleryInput" placeholder="https://... (cole o link e clique em Adicionar)" />
+              <button type="button" class="btn btn-outline" id="addGallery">Adicionar</button>
             </div>
           </div>
-          <div class="field"><label>Características (uma por linha)</label><textarea id="pFeatures" rows="4"></textarea></div>
-          <div style="display:flex;gap:12px;">
-            <button class="btn btn-primary" id="saveProductBtn">Salvar</button>
-            <button class="btn btn-outline" id="cancelProductBtn" type="button">Cancelar</button>
-          </div>
+          <div class="field full"><label for="pFeatures">Características (uma por linha)</label><textarea id="pFeatures" rows="4"></textarea></div>
         </div>
-      </div>
-      <div id="productsTableWrap"><div class="empty-state">carregando...</div></div>
-    </div>
-
-    <div id="tab-users" class="tab-panel" style="display:none;">
-      <div class="admin-toolbar">
-        <input type="text" id="userSearchInput" placeholder="Buscar por nome ou e-mail..." />
-      </div>
-      <div id="usersTableWrap"><div class="empty-state">carregando...</div></div>
-    </div>
-
-    <div id="tab-audit" class="tab-panel" style="display:none;">
-      <p class="helper" style="margin-top:0;">Ações administrativas sensíveis: quem fez, o quê, quando e de qual IP.</p>
-      <div class="admin-toolbar">
-        <button id="clearAuditBtn" class="btn btn-danger">Limpar log de auditoria</button>
-      </div>
-      <div id="auditTableWrap"><div class="empty-state">carregando...</div></div>
-    </div>
-
-    <div id="tab-settings" class="tab-panel" style="display:none;">
-      <div class="ledger" style="max-width:600px;">
-        <div class="ledger-head"><span>CONFIGURAÇÕES DO SITE</span><span></span></div>
-        <div style="padding:20px;">
-          <div class="field">
-            <label>Link do Discord (suporte)</label>
-            <input type="text" id="cfgDiscord" placeholder="https://discord.gg/..." />
-          </div>
-          <div class="field">
-            <label>Link do WhatsApp (suporte)</label>
-            <input type="text" id="cfgWhatsapp" placeholder="https://wa.me/55..." />
-          </div>
-          <div class="field">
-            <label>E-mail de contato</label>
-            <input type="email" id="cfgEmail" placeholder="contato@nullbanker.com" />
-          </div>
-          <div class="field">
-            <label>Aviso no topo do site (opcional)</label>
-            <textarea id="cfgAnnouncement" rows="2" placeholder="Ex: Promoção de lançamento — 10% off até domingo."></textarea>
-          </div>
-          <div class="msg" id="settingsSuccess"></div>
-          <button class="btn btn-primary" id="saveSettingsBtn">Salvar configurações</button>
+        <div class="admin-toolbar" style="margin-bottom:0;">
+          <button type="button" class="btn btn-primary" id="saveProduct">Salvar produto</button>
+          <button type="button" class="btn btn-outline" id="cancelProduct">Cancelar</button>
         </div>
       </div>
 
-      <div class="ledger mt-40" style="max-width:600px;">
-        <div class="ledger-head"><span>SEGURANÇA DA CONTA ADMIN</span><span></span></div>
-        <div style="padding:20px;">
-          <p class="helper" style="margin-top:0;">Trocar a senha desta conta de administrador (a que você está usando agora).</p>
-          <div class="msg" id="adminPwError"></div>
-          <div class="msg" id="adminPwSuccess"></div>
-          <div class="field">
-            <label>Senha atual</label>
-            <input type="password" id="adminCurrentPassword" />
-          </div>
-          <div class="field">
-            <label>Nova senha</label>
-            <input type="password" id="adminNewPassword" minlength="6" />
-          </div>
-          <button class="btn btn-outline" id="saveAdminPasswordBtn">Atualizar senha</button>
-        </div>
-      </div>
-    </div>
+      <div class="table-wrap" id="productsTable"></div>
+    </section>
 
-    <div class="modal-overlay" id="userOrdersModal">
-      <div class="modal-box">
-        <div class="modal-head">
-          <span id="userOrdersTitle">Pedidos do cliente</span>
-          <button id="closeUserOrdersModal" class="btn btn-outline">Fechar</button>
+    <!-- USUÁRIOS -->
+    <section class="tab-panel" id="tab-users" style="display:none;">
+      <div class="admin-toolbar"><input type="text" id="userSearch" placeholder="Buscar por nome ou e-mail..." /></div>
+      <div class="table-wrap" id="usersTable"></div>
+    </section>
+
+    <!-- VISITAS -->
+    <section class="tab-panel" id="tab-visits" style="display:none;">
+      <div class="stat-grid" id="visitStats"></div>
+      <div class="panel"><h3>Páginas mais vistas</h3><p class="sub">Calculado sobre as últimas 200 visitas registradas.</p><div id="topPages"></div></div>
+      <div class="admin-toolbar"><button type="button" class="btn btn-danger" id="clearVisits">Limpar histórico de visitas</button></div>
+      <div class="table-wrap" id="visitsTable"></div>
+    </section>
+
+    <!-- WEBHOOKS -->
+    <section class="tab-panel" id="tab-webhooks" style="display:none;">
+      <p class="helper" style="margin-top:0;">Eventos recebidos da gateway de pagamento (os mais recentes primeiro).</p>
+      <div class="admin-toolbar"><button type="button" class="btn btn-danger" id="clearWebhooks">Limpar log de webhooks</button></div>
+      <div class="table-wrap" id="webhooksTable"></div>
+    </section>
+
+    <!-- AUDITORIA -->
+    <section class="tab-panel" id="tab-audit" style="display:none;">
+      <p class="helper" style="margin-top:0;">Ações administrativas: quem fez, o quê, quando e de qual IP.</p>
+      <div class="admin-toolbar"><button type="button" class="btn btn-danger" id="clearAudit">Limpar log de auditoria</button></div>
+      <div class="table-wrap" id="auditTable"></div>
+    </section>
+
+    <!-- APARÊNCIA -->
+    <section class="tab-panel" id="tab-appearance" style="display:none;">
+      <div class="panel" style="max-width:640px;">
+        <h3>Cor de destaque do site</h3>
+        <p class="sub">Muda o dourado do tema em todo o site (botões, linhas, títulos em destaque). As ilustrações mantêm as cores originais.</p>
+        <div class="swatches" id="swatches"></div>
+        <div class="field" style="max-width:260px;">
+          <label for="accentCustom">Cor personalizada</label>
+          <div class="admin-toolbar" style="margin:0;"><input type="color" id="accentCustom" value="#c9a45c" /><input type="text" id="accentHex" value="#c9a45c" maxlength="7" /></div>
         </div>
-        <div id="userOrdersBody"><div class="empty-state">carregando...</div></div>
+        <div class="theme-preview"><span class="btn btn-primary">Botão principal</span><span class="btn btn-outline">Botão secundário</span><span class="badge paid">Pago</span></div>
+        <div class="admin-toolbar" style="margin:24px 0 0;">
+          <button type="button" class="btn btn-primary" id="saveAccent">Salvar aparência</button>
+          <button type="button" class="btn btn-outline" id="resetAccent">Restaurar padrão</button>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- CONFIGURAÇÕES -->
+    <section class="tab-panel" id="tab-settings" style="display:none;">
+      <div class="panel" style="max-width:760px;">
+        <h3>Site</h3>
+        <p class="sub">Identidade e contatos exibidos no site.</p>
+        <div class="form-grid">
+          <div class="field"><label for="cfgSiteName">Nome do site</label><input type="text" id="cfgSiteName" maxlength="40" placeholder="NULLBANKER" /></div>
+          <div class="field"><label for="cfgLogo">Link da logo (opcional)</label><input type="text" id="cfgLogo" placeholder="Vazio = usa /img/logo.png" /></div>
+          <div class="field"><label for="cfgDiscord">Discord (suporte)</label><input type="text" id="cfgDiscord" placeholder="https://discord.gg/..." /></div>
+          <div class="field"><label for="cfgWhatsapp">WhatsApp (suporte)</label><input type="text" id="cfgWhatsapp" placeholder="https://wa.me/55..." /></div>
+          <div class="field full"><label for="cfgEmail">E-mail de contato</label><input type="email" id="cfgEmail" /></div>
+          <div class="field full"><label for="cfgAnnouncement">Aviso no topo do site (opcional)</label><textarea id="cfgAnnouncement" rows="2" maxlength="300"></textarea></div>
+        </div>
+        <button type="button" class="btn btn-primary" id="saveSettings">Salvar configurações</button>
+      </div>
+
+      <div class="panel" style="max-width:760px;">
+        <h3>Gateway de pagamento</h3>
+        <p class="sub">As chaves ficam só no servidor (variáveis de ambiente do Render), nunca aqui no painel.</p>
+        <div id="gatewayStatus"></div>
+        <p class="helper" style="margin:14px 0 0;">E-mail (SMTP): o sistema ainda não envia e-mails automáticos. Para ativar é preciso adicionar a biblioteca nodemailer ao projeto.</p>
+      </div>
+
+      <div class="panel" style="max-width:760px;">
+        <h3>Segurança da conta</h3>
+        <p class="sub">Trocar a senha da conta que você está usando agora.</p>
+        <div class="form-grid">
+          <div class="field"><label for="pwCurrent">Senha atual</label><input type="password" id="pwCurrent" autocomplete="current-password" /></div>
+          <div class="field"><label for="pwNew">Nova senha</label><input type="password" id="pwNew" autocomplete="new-password" minlength="6" /></div>
+        </div>
+        <button type="button" class="btn btn-outline" id="savePassword">Atualizar senha</button>
+      </div>
+    </section>
   </main>
 </div>
 
+<!-- LOGIN DO PAINEL -->
 <div class="admin-login" id="adminLoginGate" style="display:none;">
-  <img class="crest" src="/img/crest.svg" alt="" />
+  <img class="crest" src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" style="width:96px;margin:0 auto 18px;border-radius:10px;" />
   <div class="eyebrow-num center-text">Acesso restrito</div>
   <h2 class="center-text">Painel da casa</h2>
   <div class="ornament"></div>
   <div class="auth-box">
-    <div class="msg" id="adminLoginError"></div>
-    <form id="adminLoginForm">
-      <div class="field"><label>E-mail</label><input type="email" id="adminEmail" required /></div>
-      <div class="field"><label>Senha</label><input type="password" id="adminPassword" required /></div>
+    <div class="msg" id="gateError"></div>
+    <form id="gateForm">
+      <div class="field"><label for="gateEmail">E-mail</label><input type="email" id="gateEmail" autocomplete="username" required /></div>
+      <div class="field"><label for="gatePassword">Senha</label><input type="password" id="gatePassword" autocomplete="current-password" required /></div>
       <button type="submit" class="btn btn-primary btn-block">Entrar</button>
     </form>
   </div>
 </div>
 
+<!-- MODAIS -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box confirm-box">
+    <h3 id="confirmTitle">Confirmar</h3>
+    <p id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-outline" id="confirmNo">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmYes">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="userEditModal">
+  <div class="modal-box confirm-box">
+    <h3>Editar usuário</h3>
+    <input type="hidden" id="ueId" />
+    <div class="field"><label for="ueName">Nome</label><input type="text" id="ueName" maxlength="120" /></div>
+    <div class="field"><label for="ueEmail">E-mail</label><input type="email" id="ueEmail" /></div>
+    <div class="field"><label for="uePhone">Telefone</label><input type="tel" id="uePhone" /></div>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-outline" id="ueCancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="ueSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="userOrdersModal">
+  <div class="modal-box">
+    <div class="modal-head"><span id="userOrdersTitle">Pedidos</span><button type="button" class="btn btn-outline btn-sm" id="userOrdersClose">Fechar</button></div>
+    <div id="userOrdersBody"></div>
+  </div>
+</div>
+
 <script src="/js/api.js"></script>
 <script>
-  const statusLabels = { paid: "pago", pending: "pendente", failed: "falhou", cancelled: "cancelado", refunded: "reembolsado" };
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STATUS = { paid: "Pago", pending: "Pendente", failed: "Falhou", cancelled: "Cancelado", refunded: "Reembolsado" };
+  const TITLES = { dashboard: "Dashboard", orders: "Pedidos", products: "Produtos", users: "Usuários", visits: "Visitas", webhooks: "Webhooks", audit: "Auditoria", appearance: "Aparência", settings: "Configurações" };
+  const badge = (s) => `<span class="badge ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
+  const emptyRow = (text) => `<div class="empty-state">${esc(text)}</div>`;
+  const debounce = (fn, ms = 300) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
-  function badge(status) {
-    return `<span class="badge ${esc(status)}">${esc(statusLabels[status] || status)}</span>`;
+  /* ---------- confirmação em modal (no lugar do confirm() do navegador) ---------- */
+  function ask({ title = "Confirmar", message = "", confirmText = "Confirmar", danger = false }) {
+    return new Promise((resolve) => {
+      const modal = $("confirmModal");
+      $("confirmTitle").textContent = title;
+      $("confirmMessage").textContent = message;
+      const yes = $("confirmYes");
+      yes.textContent = confirmText;
+      yes.className = danger ? "btn btn-danger" : "btn btn-primary";
+      modal.classList.add("open");
+      const done = (value) => {
+        modal.classList.remove("open");
+        yes.onclick = null; $("confirmNo").onclick = null;
+        resolve(value);
+      };
+      yes.onclick = () => done(true);
+      $("confirmNo").onclick = () => done(false);
+    });
   }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") document.querySelectorAll(".modal-overlay.open").forEach((m) => { if (m.id === "confirmModal") $("confirmNo").click(); else m.classList.remove("open"); });
+  });
 
+  /* ---------- acesso ---------- */
   function showGate(message) {
-    document.getElementById("adminShell").style.display = "none";
-    document.getElementById("adminLoginGate").style.display = "block";
-    const box = document.getElementById("adminLoginError");
-    if (message) {
-      box.textContent = message;
-      box.className = "msg error";
-    }
+    $("adminShell").style.display = "none";
+    $("adminLoginGate").style.display = "block";
+    const box = $("gateError");
+    if (message) { box.textContent = message; box.className = "msg error"; }
   }
-
-  // Sessão expirada, token inválido ou acesso de admin removido: volta para o login.
   API.onUnauthorized = () => showGate("Sua sessão expirou ou o acesso foi removido. Entre novamente.");
 
-  async function checkAccess() {
+  async function boot() {
     const user = API.user();
-    if (!user || !user.isAdmin || !API.token()) {
-      showGate();
-      return false;
-    }
-    // Confere no servidor (não só no que ficou salvo no navegador).
+    if (!user || !user.isAdmin || !API.token()) return showGate();
     try {
-      await API.get("/admin/stats");
+      await API.get("/admin/stats"); // confere no servidor, não só no que ficou salvo no navegador
     } catch (e) {
-      API.setToken(null);
-      API.setUser(null);
-      showGate();
-      return false;
+      API.setToken(null); API.setUser(null);
+      return showGate();
     }
-    document.getElementById("adminLoginGate").style.display = "none";
-    document.getElementById("adminShell").style.display = "grid";
-    document.getElementById("adminGreeting").textContent = `logado como ${user.name}`;
-    return true;
+    $("adminLoginGate").style.display = "none";
+    $("adminShell").style.display = "grid";
+    $("adminGreeting").textContent = `logado como ${user.name}`;
+    API.get("/config").then((c) => c.themeAccent && setAccent(c.themeAccent)).catch(() => {});
+    const initial = (location.hash || "").replace("#", "");
+    showTab(TITLES[initial] ? initial : "dashboard");
   }
 
-  document.getElementById("adminLoginForm").addEventListener("submit", async (e) => {
+  $("gateForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const errorBox = document.getElementById("adminLoginError");
-    errorBox.textContent = "";
-    errorBox.className = "msg";
+    const box = $("gateError");
+    box.className = "msg"; box.textContent = "";
     try {
-      const data = await API.post("/auth/login", {
-        email: document.getElementById("adminEmail").value.trim(),
-        password: document.getElementById("adminPassword").value,
-      });
-      if (!data.user.isAdmin) {
-        errorBox.textContent = "Esta conta não tem acesso ao painel administrativo.";
-        errorBox.className = "msg error";
-        return;
-      }
-      API.setToken(data.token);
-      API.setUser(data.user);
-      window.location.reload();
+      const data = await API.post("/auth/login", { email: $("gateEmail").value.trim(), password: $("gatePassword").value });
+      if (!data.user.isAdmin) { box.textContent = "Esta conta não tem acesso ao painel."; box.className = "msg error"; return; }
+      API.setToken(data.token); API.setUser(data.user);
+      $("gatePassword").value = "";
+      boot();
     } catch (err) {
-      errorBox.textContent = err.message || "Não foi possível entrar.";
-      errorBox.className = "msg error";
+      box.textContent = err.message || "Não foi possível entrar.";
+      box.className = "msg error";
     }
   });
+  $("logoutBtn").addEventListener("click", (e) => { e.preventDefault(); API.logout("/admin.html"); });
 
-  document.getElementById("logoutBtn").addEventListener("click", (e) => {
-    e.preventDefault();
-    API.logout("/admin.html");
-  });
+  /* ---------- abas ---------- */
+  const loaders = {};
+  function showTab(name) {
+    document.querySelectorAll("#sideNav [data-tab]").forEach((a) => a.classList.toggle("active", a.dataset.tab === name));
+    document.querySelectorAll(".tab-panel").forEach((p) => (p.style.display = p.id === `tab-${name}` ? "block" : "none"));
+    $("tabTitle").textContent = TITLES[name];
+    history.replaceState(null, "", `#${name}`);
+    if (loaders[name]) loaders[name]();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll("#sideNav [data-tab]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); showTab(a.dataset.tab); }));
 
-  // ---------- Tabs ----------
-  const tabs = document.querySelectorAll("[data-tab]");
-  const titles = {
-    dashboard: "Dashboard", orders: "Pedidos", visits: "Visitantes",
-    webhooks: "Webhooks", products: "Produtos", users: "Usuários", audit: "Auditoria", settings: "Configurações",
-  };
+  /* ---------- tabelas ---------- */
+  function ordersTable(orders, editable) {
+    return `<table class="admin-table"><thead><tr><th>#</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Data</th></tr></thead><tbody>${orders.map((o) => `
+      <tr>
+        <td>${o.id}</td>
+        <td>${esc(o.customerName)}<br /><span class="helper" style="margin:0;">${esc(o.customerEmail)}</span></td>
+        <td>${o.product ? esc(o.product.name) : "—"}</td>
+        <td>${formatBRL(o.amount)}</td>
+        <td>${o.paymentMethod === "pix" ? "Pix" : "Cartão"}${o.cardLast4 ? ` ••${esc(o.cardLast4)}` : ""}</td>
+        <td>${editable
+          ? `<select class="status-select" data-id="${o.id}" data-prev="${esc(o.status)}">${Object.keys(STATUS).map((k) => `<option value="${k}" ${k === o.status ? "selected" : ""}>${STATUS[k]}</option>`).join("")}</select>`
+          : badge(o.status)}</td>
+        <td>${formatDate(o.createdAt)}</td>
+      </tr>`).join("")}</tbody></table>`;
+  }
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", (e) => {
-      e.preventDefault();
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      const name = tab.dataset.tab;
-      document.querySelectorAll(".tab-panel").forEach((p) => (p.style.display = "none"));
-      document.getElementById(`tab-${name}`).style.display = "block";
-      document.getElementById("tabTitle").textContent = titles[name];
-      loadTab(name);
+  function bindStatusSelects(root) {
+    root.querySelectorAll(".status-select").forEach((sel) => {
+      sel.addEventListener("change", async () => {
+        const prev = sel.dataset.prev, next = sel.value;
+        if (["refunded", "cancelled", "failed"].includes(next)) {
+          const ok = await ask({
+            title: "Alterar status do pedido",
+            message: next === "refunded"
+              ? "Marcar como reembolsado? O cliente perde o acesso ao download. O estorno do dinheiro continua sendo feito no painel da Plumify."
+              : `Marcar este pedido como "${STATUS[next]}"? O cliente não terá acesso ao download.`,
+            confirmText: "Alterar", danger: true,
+          });
+          if (!ok) { sel.value = prev; return; }
+        }
+        try {
+          await API.put(`/admin/orders/${sel.dataset.id}`, { status: next });
+          sel.dataset.prev = next;
+          toast("Status atualizado.", "success");
+        } catch (e) { sel.value = prev; toast(e.message || "Não foi possível atualizar.", "error"); }
+      });
     });
-  });
-
-  function loadTab(name) {
-    if (name === "dashboard") loadDashboard();
-    if (name === "orders") loadOrders();
-    if (name === "visits") loadVisits();
-    if (name === "webhooks") loadWebhooks();
-    if (name === "products") loadProducts();
-    if (name === "users") loadUsers();
-    if (name === "audit") loadAuditLog();
-    if (name === "settings") loadSettings();
   }
 
-  // ---------- Dashboard ----------
-  async function loadDashboard() {
+  /* ---------- DASHBOARD ---------- */
+  loaders.dashboard = async () => {
     try {
-      const stats = await API.get("/admin/stats");
-      document.getElementById("statRevenue").textContent = formatBRL(stats.revenue);
-      document.getElementById("statOrders").textContent = `${stats.paidOrders}/${stats.totalOrders}`;
-      document.getElementById("statPending").textContent = stats.pendingOrders;
-      document.getElementById("statVisits").textContent = stats.recentVisits;
-      document.getElementById("statProducts").textContent = stats.totalProducts;
+      const s = await API.get("/admin/stats");
+      const cards = [
+        ["Receita (paga)", formatBRL(s.revenue)], ["Pedidos pagos", `${s.paidOrders}/${s.totalOrders}`], ["Pendentes", s.pendingOrders],
+        ["Visitas (30 dias)", s.recentVisits], ["Usuários", s.totalUsers], ["Produtos", s.totalProducts], ["Downloads", s.totalDownloads || 0],
+      ];
+      $("statGrid").innerHTML = cards.map(([l, v]) => `<div class="stat-cell"><div class="label">${l}</div><div class="value">${esc(v)}</div></div>`).join("");
+    } catch (e) { $("statGrid").innerHTML = emptyRow("Não foi possível carregar as métricas."); }
 
-      const { orders } = await API.get("/admin/orders");
-      const recent = orders.slice(0, 8);
-      document.getElementById("dashboardOrders").innerHTML = recent.length
-        ? renderOrdersTable(recent)
-        : `<div class="empty-state">Nenhum pedido ainda.</div>`;
-      bindStatusSelects(document.getElementById("dashboardOrders"));
-
-      loadRevenueChart();
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async function loadRevenueChart() {
-    const box = document.getElementById("revenueChart");
     try {
       const { days } = await API.get("/admin/stats/revenue-daily");
-      const max = Math.max(1, ...days.map((d) => d.total));
-      box.innerHTML = days
-        .map((d) => {
-          const heightPct = Math.round((d.total / max) * 100);
-          const label = new Date(d.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-          return `<div class="bar-col" title="${label}: ${formatBRL(d.total)}">
-            <div class="bar-fill" style="height:${d.total > 0 ? Math.max(heightPct, 4) : 0}%"></div>
-            <span class="bar-label">${label.slice(0, 2)}</span>
-          </div>`;
-        })
-        .join("");
-    } catch (e) {
-      box.innerHTML = `<div class="empty-state">Não foi possível carregar o gráfico.</div>`;
-    }
-  }
+      const max = Math.max(...days.map((d) => d.total), 1);
+      $("revenueChart").innerHTML = days.map((d) => `<div class="bar-col" title="${esc(d.date)}: ${esc(formatBRL(d.total))}"><div class="bar-fill" style="height:${Math.round((d.total / max) * 100)}%"></div><span class="bar-label">${esc(String(d.date).slice(8, 10))}</span></div>`).join("");
+    } catch (e) { $("revenueChart").innerHTML = emptyRow("Não foi possível carregar o gráfico."); }
 
-  function renderOrdersTable(orders) {
-    return `
-      <table class="admin-table">
-        <thead><tr><th>#</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Data</th></tr></thead>
-        <tbody>
-          ${orders
-            .map(
-              (o) => `
-            <tr>
-              <td>${o.id}</td>
-              <td>${esc(o.customerName)}<br /><span class="helper" style="margin:0;">${esc(o.customerEmail)}</span></td>
-              <td>${o.product ? esc(o.product.name) : "—"}</td>
-              <td>${formatBRL(o.amount)}</td>
-              <td>${o.paymentMethod === "pix" ? "Pix" : "Cartão"}</td>
-              <td>
-                <select data-order-id="${o.id}" class="statusSelect">
-                  ${["pending", "paid", "failed", "cancelled", "refunded"]
-                    .map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${statusLabels[s]}</option>`)
-                    .join("")}
-                </select>
-              </td>
-              <td>${formatDate(o.createdAt)}</td>
-            </tr>`
-            )
-            .join("")}
-        </tbody>
-      </table>
-    `;
-  }
+    try {
+      const { orders } = await API.get("/admin/orders");
+      $("dashboardOrders").innerHTML = orders.length ? ordersTable(orders.slice(0, 8), false) : emptyRow("Nenhum pedido ainda.");
+    } catch (e) { $("dashboardOrders").innerHTML = emptyRow("Não foi possível carregar os pedidos."); }
+  };
 
-  function bindStatusSelects(container) {
-    container.querySelectorAll(".statusSelect").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        try {
-          await API.put(`/admin/orders/${sel.dataset.orderId}`, { status: sel.value });
-        } catch (e) {
-          alert("Não foi possível atualizar o status.");
-        }
-      });
-    });
-  }
-
-  // ---------- Orders tab ----------
-  let currentOrderFilter = "";
-  let currentOrderSearch = "";
-
+  /* ---------- PEDIDOS ---------- */
+  let orderFilter = "", orderSearch = "";
   function ordersQuery() {
-    const params = new URLSearchParams();
-    if (currentOrderFilter) params.set("status", currentOrderFilter);
-    if (currentOrderSearch) params.set("q", currentOrderSearch);
-    const qs = params.toString();
-    return qs ? `?${qs}` : "";
+    const p = new URLSearchParams();
+    if (orderFilter) p.set("status", orderFilter);
+    if (orderSearch) p.set("q", orderSearch);
+    const q = p.toString();
+    return q ? `?${q}` : "";
   }
-
-  async function loadOrders() {
-    const wrap = document.getElementById("ordersTableWrap");
+  loaders.orders = async () => {
+    const wrap = $("ordersTable");
     try {
       const { orders } = await API.get(`/admin/orders${ordersQuery()}`);
-      wrap.innerHTML = orders.length ? renderOrdersTable(orders) : `<div class="empty-state">Nenhum pedido encontrado.</div>`;
+      wrap.innerHTML = orders.length ? ordersTable(orders, true) : emptyRow("Nenhum pedido encontrado.");
       bindStatusSelects(wrap);
-    } catch (e) {
-      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os pedidos.</div>`;
-    }
+    } catch (e) { wrap.innerHTML = emptyRow("Não foi possível carregar os pedidos."); }
+  };
+  document.querySelectorAll("#orderFilters button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#orderFilters button").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active"); orderFilter = b.dataset.status; loaders.orders();
+  }));
+  $("orderSearch").addEventListener("input", debounce((e) => { orderSearch = e.target.value.trim(); loaders.orders(); }));
+  $("exportOrders").addEventListener("click", () => window.open(`/api/admin/orders/export${ordersQuery()}`, "_blank"));
+  $("cleanupOrders").addEventListener("click", async () => {
+    if (!(await ask({ title: "Limpar pedidos", message: "Apagar definitivamente todos os pedidos Falhos ou Cancelados? Pedidos pagos e pendentes nunca são afetados.", confirmText: "Apagar", danger: true }))) return;
+    try { const r = await API.del("/admin/orders/cleanup"); toast(`${r.count} pedido(s) removido(s).`, "success"); loaders.orders(); }
+    catch (e) { toast(e.message || "Não foi possível limpar.", "error"); }
+  });
+
+  /* ---------- PRODUTOS ---------- */
+  let gallery = [];
+  let productsCache = [];
+  function parseBRL(v) {
+    let t = String(v).trim().replace(/[R$\s]/g, "");
+    if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+    const n = Number(t);
+    return Number.isFinite(n) ? n : NaN;
   }
-
-  let orderSearchTimeout;
-  document.getElementById("orderSearchInput").addEventListener("input", (e) => {
-    clearTimeout(orderSearchTimeout);
-    orderSearchTimeout = setTimeout(() => {
-      currentOrderSearch = e.target.value.trim();
-      loadOrders();
-    }, 300);
-  });
-
-  document.getElementById("exportOrdersBtn").addEventListener("click", (e) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (currentOrderFilter) params.set("status", currentOrderFilter);
-    if (currentOrderSearch) params.set("q", currentOrderSearch);
-    const qs = params.toString();
-    // A navegação usa o cookie httpOnly de sessão (já enviado automaticamente
-    // pelo navegador), então não é preciso — e não é seguro — colocar o token na URL.
-    window.open(`/api/admin/orders/export${qs ? `?${qs}` : ""}`, "_blank");
-  });
-
-  document.querySelectorAll("#orderFilterTabs button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#orderFilterTabs button").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentOrderFilter = btn.dataset.status;
-      loadOrders();
-    });
-  });
-
-  document.getElementById("cleanupOrdersBtn").addEventListener("click", async () => {
-    if (!confirm("Isso vai apagar permanentemente todos os pedidos com status Falhou ou Cancelado (pedidos pagos e pendentes nunca são afetados). Continuar?")) return;
-    try {
-      const result = await API.del("/admin/orders/cleanup");
-      alert(`${result.count} pedido(s) removido(s).`);
-      loadOrders();
-    } catch (e) {
-      alert(e.message || "Não foi possível limpar os pedidos.");
-    }
-  });
-
-  // ---------- Visits tab ----------
-  async function loadVisits() {
-    const wrap = document.getElementById("visitsTableWrap");
-    try {
-      const { visits } = await API.get("/admin/visits");
-      wrap.innerHTML = visits.length
-        ? `<table class="admin-table"><thead><tr><th>Página</th><th>IP</th><th>Navegador</th><th>Data</th></tr></thead>
-           <tbody>${visits
-             .map((v) => `<tr><td>${esc(v.path)}</td><td>${esc(v.ip || "—")}</td><td>${esc((v.userAgent || "—").slice(0, 60))}</td><td>${formatDate(v.createdAt)}</td></tr>`)
-             .join("")}</tbody></table>`
-        : `<div class="empty-state">Nenhuma visita registrada ainda.</div>`;
-    } catch (e) {
-      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar as visitas.</div>`;
-    }
+  function renderGallery() {
+    const grid = $("galleryGrid");
+    grid.innerHTML = gallery.map((url, i) => `<div class="gallery-thumb"><img src="${esc(url)}" alt="Foto ${i + 1}" /><button type="button" class="gallery-remove" data-i="${i}" aria-label="Remover foto">×</button></div>`).join("");
+    grid.querySelectorAll("img").forEach((img) => img.addEventListener("error", () => img.closest(".gallery-thumb").classList.add("broken")));
+    grid.querySelectorAll(".gallery-remove").forEach((b) => b.addEventListener("click", () => { gallery.splice(Number(b.dataset.i), 1); renderGallery(); }));
   }
+  function updateImagePreview() {
+    const url = $("pImage").value.trim();
+    const box = $("imagePreview");
+    box.innerHTML = "";
+    if (!url) return;
+    const img = document.createElement("img");
+    img.alt = "Prévia";
+    img.addEventListener("error", () => img.remove());
+    img.src = url;
+    box.appendChild(img);
+  }
+  function syncFree() {
+    const free = $("pFree").checked;
+    $("pPrice").disabled = free;
+    if (free) $("pPrice").value = "0";
+  }
+  function openProductPanel(p) {
+    $("productPanel").style.display = "block";
+    $("productPanelTitle").textContent = p ? "Editar produto" : "Novo produto";
+    $("pId").value = p ? p.id : "";
+    $("pName").value = p ? p.name : "";
+    $("pShort").value = p ? p.shortDesc : "";
+    $("pDesc").value = p ? p.description : "";
+    $("pFree").checked = p ? Number(p.price) <= 0 : false;
+    $("pPrice").value = p ? String(p.price).replace(".", ",") : "";
+    $("pDownload").value = p ? p.downloadUrl || "" : "";
+    $("pImage").value = p ? p.imageUrl || "" : "";
+    $("pFeatures").value = p ? (p.features || []).join("\n") : "";
+    gallery = p ? [...(p.images || [])] : [];
+    syncFree(); renderGallery(); updateImagePreview();
+    $("productPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("pFree").addEventListener("change", () => { syncFree(); if (!$("pFree").checked) $("pPrice").value = ""; });
+  $("pImage").addEventListener("input", debounce(updateImagePreview, 250));
+  $("addGallery").addEventListener("click", () => {
+    const v = $("pGalleryInput").value.trim();
+    if (!v) return;
+    if (gallery.length >= 12) return toast("Máximo de 12 fotos na galeria.", "error");
+    gallery.push(v); $("pGalleryInput").value = ""; renderGallery();
+  });
+  $("pGalleryInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("addGallery").click(); } });
+  $("newProduct").addEventListener("click", () => openProductPanel(null));
+  $("cancelProduct").addEventListener("click", () => ($("productPanel").style.display = "none"));
 
-  document.getElementById("clearVisitsBtn").addEventListener("click", async () => {
-    if (!confirm("Isso vai apagar permanentemente todo o histórico de visitas. Continuar?")) return;
+  $("saveProduct").addEventListener("click", async () => {
+    const free = $("pFree").checked;
+    const price = free ? 0 : parseBRL($("pPrice").value);
+    const payload = {
+      name: $("pName").value.trim(), shortDesc: $("pShort").value.trim(), description: $("pDesc").value.trim(),
+      price, imageUrl: $("pImage").value.trim(), downloadUrl: $("pDownload").value.trim(), images: gallery,
+      features: $("pFeatures").value.split("\n").map((f) => f.trim()).filter(Boolean),
+    };
+    if (!payload.name || !payload.shortDesc || !payload.description) return toast("Preencha nome, descrição curta e descrição completa.", "error");
+    if (!free && (!Number.isFinite(price) || price <= 0)) return toast("Informe um preço maior que zero ou marque o produto como grátis.", "error");
+    const id = $("pId").value;
+    const btn = $("saveProduct");
+    btn.disabled = true;
     try {
-      const result = await API.del("/admin/visits");
-      alert(`${result.count} registro(s) de visita removido(s).`);
-      loadVisits();
-    } catch (e) {
-      alert(e.message || "Não foi possível limpar as visitas.");
-    }
+      if (id) await API.put(`/products/${id}`, payload); else await API.post("/products", payload);
+      toast("Produto salvo.", "success");
+      $("productPanel").style.display = "none";
+      loaders.products();
+    } catch (e) { toast(e.message || "Não foi possível salvar o produto.", "error"); }
+    btn.disabled = false;
   });
 
-  // ---------- Webhooks tab ----------
-  async function loadWebhooks() {
-    const wrap = document.getElementById("webhooksTableWrap");
+  loaders.products = async () => {
+    const wrap = $("productsTable");
+    try {
+      const { products } = await API.get("/admin/products");
+      productsCache = products;
+      wrap.innerHTML = products.length ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Arquivo</th><th>Pedidos</th><th>Situação</th><th></th></tr></thead><tbody>${products.map((p) => `
+        <tr>
+          <td>${p.imageUrl ? `<img class="thumb-sm" src="${esc(p.imageUrl)}" alt="" />` : `<span class="helper" style="margin:0;">—</span>`}</td>
+          <td>${esc(p.name)}</td>
+          <td>${Number(p.price) <= 0 ? '<span class="badge free">Grátis</span>' : formatBRL(p.price)}</td>
+          <td>${p.downloadUrl ? '<span class="badge paid">Tem</span>' : '<span class="badge pending">Sem arquivo</span>'}</td>
+          <td>${p._count ? p._count.orders : 0}</td>
+          <td>${p.active ? '<span class="badge paid">Na loja</span>' : '<span class="badge failed">Oculto</span>'}</td>
+          <td><div class="row-actions">
+            <button type="button" class="btn btn-outline btn-sm" data-act="edit" data-id="${p.id}">Editar</button>
+            <button type="button" class="btn btn-outline btn-sm" data-act="toggle" data-id="${p.id}">${p.active ? "Ocultar" : "Mostrar"}</button>
+            <button type="button" class="btn btn-danger btn-sm" data-act="delete" data-id="${p.id}">Excluir</button>
+          </div></td>
+        </tr>`).join("")}</tbody></table>` : emptyRow("Nenhum produto cadastrado.");
+
+      wrap.querySelectorAll(".thumb-sm").forEach((img) => img.addEventListener("error", () => img.remove()));
+      wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
+        const p = productsCache.find((x) => x.id === Number(b.dataset.id));
+        if (!p) return;
+        if (b.dataset.act === "edit") return openProductPanel(p);
+        if (b.dataset.act === "toggle") {
+          try { await API.put(`/products/${p.id}`, { active: !p.active }); toast(p.active ? "Produto ocultado." : "Produto visível na loja.", "success"); loaders.products(); }
+          catch (e) { toast(e.message || "Não foi possível alterar.", "error"); }
+          return;
+        }
+        if (!(await ask({ title: "Excluir produto", message: `Excluir "${p.name}"? Se já houver pedidos, ele será apenas ocultado da loja (o histórico de vendas é mantido).`, confirmText: "Excluir", danger: true }))) return;
+        try {
+          const r = await API.del(`/products/${p.id}`);
+          toast(r.deactivated ? `Tem ${r.orders} pedido(s): foi ocultado em vez de apagado.` : "Produto excluído.", "success");
+          loaders.products();
+        } catch (e) { toast(e.message || "Não foi possível excluir.", "error"); }
+      }));
+    } catch (e) { wrap.innerHTML = emptyRow("Não foi possível carregar os produtos."); }
+  };
+
+  /* ---------- USUÁRIOS ---------- */
+  let userSearch = "";
+  const whatsappLink = (phone) => {
+    let d = String(phone || "").replace(/\D/g, "");
+    if (d.length === 10 || d.length === 11) d = "55" + d;
+    return d.length >= 12 ? `https://wa.me/${d}` : null;
+  };
+  loaders.users = async () => {
+    const wrap = $("usersTable");
+    try {
+      const { users } = await API.get(`/admin/users${userSearch ? `?q=${encodeURIComponent(userSearch)}` : ""}`);
+      const me = API.user();
+      wrap.innerHTML = users.length ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Situação</th><th>Pedidos</th><th>Último login</th><th>Desde</th><th></th></tr></thead><tbody>${users.map((u) => {
+        const self = me && u.id === me.id;
+        const locked = u.lockedUntil && new Date(u.lockedUntil) > new Date();
+        const wa = whatsappLink(u.phone);
+        return `<tr>
+          <td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.phone || "—")}</td>
+          <td>${u.isAdmin ? '<span class="badge paid">Admin</span> ' : ""}${u.isBanned ? '<span class="badge banned">Banido</span> ' : ""}${locked ? '<span class="badge pending">Bloqueado</span>' : ""}${!u.isAdmin && !u.isBanned && !locked ? '<span class="badge">Usuário</span>' : ""}</td>
+          <td>${u._count ? u._count.orders : 0}</td>
+          <td>${u.lastLoginAt ? formatDate(u.lastLoginAt) : "nunca"}</td>
+          <td>${formatDate(u.createdAt)}</td>
+          <td><div class="row-actions">
+            <button type="button" class="btn btn-outline btn-sm" data-act="orders" data-id="${u.id}" data-name="${esc(u.name)}">Pedidos</button>
+            <button type="button" class="btn btn-outline btn-sm" data-act="edit" data-id="${u.id}">Editar</button>
+            ${wa ? `<a class="btn btn-outline btn-sm" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+            ${locked ? `<button type="button" class="btn btn-outline btn-sm" data-act="unlock" data-id="${u.id}">Desbloquear</button>` : ""}
+            ${self ? "" : `<button type="button" class="btn btn-outline btn-sm" data-act="admin" data-id="${u.id}" data-admin="${u.isAdmin}">${u.isAdmin ? "Remover admin" : "Tornar admin"}</button>
+            <button type="button" class="btn ${u.isBanned ? "btn-outline" : "btn-danger"} btn-sm" data-act="ban" data-id="${u.id}" data-banned="${u.isBanned}" data-name="${esc(u.name)}">${u.isBanned ? "Desbanir" : "Banir"}</button>`}
+          </div></td>
+        </tr>`;
+      }).join("")}</tbody></table>` : emptyRow("Nenhum usuário encontrado.");
+
+      wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
+        const id = Number(b.dataset.id);
+        try {
+          if (b.dataset.act === "orders") return openUserOrders(id, b.dataset.name);
+          if (b.dataset.act === "edit") { const u = users.find((x) => x.id === id); return openUserEdit(u); }
+          if (b.dataset.act === "unlock") { await API.put(`/admin/users/${id}/unlock`, {}); toast("Conta desbloqueada.", "success"); return loaders.users(); }
+          if (b.dataset.act === "admin") {
+            const make = b.dataset.admin !== "true";
+            if (!(await ask({ title: make ? "Promover a admin" : "Remover admin", message: make ? "Esta pessoa passará a ter acesso total ao painel. Continuar?" : "Esta pessoa perderá o acesso ao painel. Continuar?", confirmText: "Continuar", danger: !make }))) return;
+            await API.put(`/admin/users/${id}`, { isAdmin: make }); toast("Permissão atualizada.", "success"); return loaders.users();
+          }
+          if (b.dataset.act === "ban") {
+            const ban = b.dataset.banned !== "true";
+            if (!(await ask({ title: ban ? "Banir usuário" : "Desbanir usuário", message: ban ? `${b.dataset.name} não poderá mais entrar, comprar nem baixar. Continuar?` : `${b.dataset.name} voltará a ter acesso. Continuar?`, confirmText: ban ? "Banir" : "Desbanir", danger: ban }))) return;
+            await API.put(`/admin/users/${id}/ban`, { banned: ban }); toast(ban ? "Usuário banido." : "Usuário desbanido.", "success"); return loaders.users();
+          }
+        } catch (e) { toast(e.message || "Ação não concluída.", "error"); }
+      }));
+    } catch (e) { wrap.innerHTML = emptyRow("Não foi possível carregar os usuários."); }
+  };
+  $("userSearch").addEventListener("input", debounce((e) => { userSearch = e.target.value.trim(); loaders.users(); }));
+
+  async function openUserOrders(id, name) {
+    $("userOrdersTitle").textContent = `Pedidos de ${name}`;
+    $("userOrdersBody").innerHTML = emptyRow("carregando...");
+    $("userOrdersModal").classList.add("open");
+    try {
+      const { orders } = await API.get(`/admin/users/${id}/orders`);
+      $("userOrdersBody").innerHTML = orders.length ? ordersTable(orders, false) : emptyRow("Este usuário ainda não fez pedidos.");
+    } catch (e) { $("userOrdersBody").innerHTML = emptyRow("Não foi possível carregar."); }
+  }
+  $("userOrdersClose").addEventListener("click", () => $("userOrdersModal").classList.remove("open"));
+
+  function openUserEdit(u) {
+    $("ueId").value = u.id; $("ueName").value = u.name; $("ueEmail").value = u.email; $("uePhone").value = u.phone || "";
+    $("userEditModal").classList.add("open");
+  }
+  $("ueCancel").addEventListener("click", () => $("userEditModal").classList.remove("open"));
+  $("ueSave").addEventListener("click", async () => {
+    try {
+      await API.put(`/admin/users/${$("ueId").value}/profile`, { name: $("ueName").value, email: $("ueEmail").value, phone: $("uePhone").value });
+      $("userEditModal").classList.remove("open"); toast("Usuário atualizado.", "success"); loaders.users();
+    } catch (e) { toast(e.message || "Não foi possível salvar.", "error"); }
+  });
+
+  /* ---------- VISITAS (única fonte de dados de visita) ---------- */
+  loaders.visits = async () => {
+    try {
+      const [{ visits }, stats] = await Promise.all([API.get("/admin/visits"), API.get("/admin/stats")]);
+      const today = new Date().toDateString();
+      const todayCount = visits.filter((v) => new Date(v.createdAt).toDateString() === today).length;
+      const weekAgo = Date.now() - 7 * 86400000;
+      const week = visits.filter((v) => new Date(v.createdAt).getTime() >= weekAgo).length;
+      const ips = new Set(visits.map((v) => v.ip).filter(Boolean)).size;
+      $("visitStats").innerHTML = [["Visitas (30 dias)", stats.recentVisits], ["Hoje", todayCount], ["Últimos 7 dias", week], ["IPs únicos", ips]]
+        .map(([l, v]) => `<div class="stat-cell"><div class="label">${l}</div><div class="value">${esc(v)}</div></div>`).join("");
+
+      const counts = {};
+      visits.forEach((v) => { counts[v.path] = (counts[v.path] || 0) + 1; });
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+      $("topPages").innerHTML = top.length ? top.map(([p, n]) => `<div class="history-row"><strong>${esc(p)}</strong><span>${n} visita(s)</span></div>`).join("") : emptyRow("Sem dados ainda.");
+
+      $("visitsTable").innerHTML = visits.length ? `<table class="admin-table"><thead><tr><th>Página</th><th>IP</th><th>Navegador</th><th>Data</th></tr></thead><tbody>${visits.map((v) => `<tr><td>${esc(v.path)}</td><td>${esc(v.ip || "—")}</td><td>${esc((v.userAgent || "—").slice(0, 70))}</td><td>${formatDate(v.createdAt)}</td></tr>`).join("")}</tbody></table>` : emptyRow("Nenhuma visita registrada.");
+    } catch (e) { $("visitsTable").innerHTML = emptyRow("Não foi possível carregar as visitas."); }
+  };
+  $("clearVisits").addEventListener("click", async () => {
+    if (!(await ask({ title: "Limpar visitas", message: "Apagar definitivamente todo o histórico de visitas?", confirmText: "Apagar", danger: true }))) return;
+    try { const r = await API.del("/admin/visits"); toast(`${r.count} registro(s) removido(s).`, "success"); loaders.visits(); } catch (e) { toast(e.message, "error"); }
+  });
+
+  /* ---------- WEBHOOKS / AUDITORIA ---------- */
+  loaders.webhooks = async () => {
     try {
       const { webhooks } = await API.get("/admin/webhooks");
-      wrap.innerHTML = webhooks.length
-        ? `<table class="admin-table"><thead><tr><th>Gateway</th><th>Evento</th><th>Data</th><th>Payload</th></tr></thead>
-           <tbody>${webhooks
-             .map(
-               (w) => `<tr><td>${esc(w.gateway)}</td><td>${esc(w.eventType || "—")}</td><td>${formatDate(w.createdAt)}</td>
-               <td><pre class="json-view">${esc(JSON.stringify(w.payload, null, 2))}</pre></td></tr>`
-             )
-             .join("")}</tbody></table>`
-        : `<div class="empty-state">Nenhum webhook recebido ainda.</div>`;
-    } catch (e) {
-      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os webhooks.</div>`;
-    }
-  }
-
-  document.getElementById("clearWebhooksBtn").addEventListener("click", async () => {
-    if (!confirm("Isso vai apagar permanentemente todo o log de webhooks recebidos. Continuar?")) return;
-    try {
-      const result = await API.del("/admin/webhooks");
-      alert(`${result.count} registro(s) de webhook removido(s).`);
-      loadWebhooks();
-    } catch (e) {
-      alert(e.message || "Não foi possível limpar os webhooks.");
-    }
+      $("webhooksTable").innerHTML = webhooks.length ? `<table class="admin-table"><thead><tr><th>Gateway</th><th>Evento</th><th>Data</th><th>Conteúdo</th></tr></thead><tbody>${webhooks.map((w) => `<tr><td>${esc(w.gateway)}</td><td>${esc(w.eventType || "—")}</td><td>${formatDate(w.createdAt)}</td><td><pre class="json-view">${esc(JSON.stringify(w.payload, null, 2))}</pre></td></tr>`).join("")}</tbody></table>` : emptyRow("Nenhum webhook recebido ainda.");
+    } catch (e) { $("webhooksTable").innerHTML = emptyRow("Não foi possível carregar."); }
+  };
+  $("clearWebhooks").addEventListener("click", async () => {
+    if (!(await ask({ title: "Limpar webhooks", message: "Apagar definitivamente todo o log de webhooks?", confirmText: "Apagar", danger: true }))) return;
+    try { const r = await API.del("/admin/webhooks"); toast(`${r.count} registro(s) removido(s).`, "success"); loaders.webhooks(); } catch (e) { toast(e.message, "error"); }
   });
 
-  // ---------- Products tab ----------
-  async function loadProducts() {
-    const wrap = document.getElementById("productsTableWrap");
-    try {
-      // Rota de admin: traz também os produtos desativados (a pública só mostra os ativos).
-      const { products } = await API.get("/admin/products");
-      wrap.innerHTML = products.length
-        ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Pedidos</th><th>Situação</th><th></th></tr></thead>
-           <tbody>${products
-             .map(
-               (p) => `<tr>
-                <td>${p.imageUrl ? `<img src="${esc(p.imageUrl)}" class="thumb-sm" alt="${esc(p.name)}" />` : `<span class="helper" style="margin:0;">sem imagem</span>`}</td>
-                <td>${esc(p.name)}</td>
-                <td>${formatBRL(p.price)}</td>
-                <td>${p._count ? p._count.orders : 0}</td>
-                <td>${p.active ? '<span class="badge paid">Na loja</span>' : '<span class="badge failed">Oculto</span>'}</td>
-                <td><div class="row-actions">
-                  <button class="btn btn-outline editProductBtn" data-id="${p.id}">Editar</button>
-                  <button class="btn btn-outline toggleProductBtn" data-id="${p.id}" data-active="${p.active}">${p.active ? "Ocultar" : "Mostrar"}</button>
-                  <button class="btn btn-danger deleteProductBtn" data-id="${p.id}">Excluir</button>
-                </div></td>
-              </tr>`
-             )
-             .join("")}</tbody></table>`
-        : `<div class="empty-state">Nenhum produto cadastrado.</div>`;
-
-      wrap.querySelectorAll(".editProductBtn").forEach((btn) =>
-        btn.addEventListener("click", () => {
-          const product = products.find((p) => p.id === Number(btn.dataset.id));
-          openProductForm(product);
-          document.getElementById("productForm").scrollIntoView({ behavior: "smooth", block: "start" });
-        })
-      );
-      wrap.querySelectorAll(".toggleProductBtn").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-          try {
-            await API.put(`/products/${btn.dataset.id}`, { active: btn.dataset.active !== "true" });
-            loadProducts();
-          } catch (e) {
-            alert(e.message || "Não foi possível alterar a situação do produto.");
-          }
-        })
-      );
-      wrap.querySelectorAll(".deleteProductBtn").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-          if (!confirm("Excluir este produto? Se ele já tiver pedidos, será apenas ocultado da loja (o histórico de vendas é mantido).")) return;
-          try {
-            const result = await API.del(`/products/${btn.dataset.id}`);
-            if (result.deactivated) alert(`Este produto tem ${result.orders} pedido(s), então foi ocultado em vez de apagado.`);
-            loadProducts();
-          } catch (e) {
-            alert(e.message || "Não foi possível excluir o produto.");
-          }
-        })
-      );
-    } catch (e) {
-      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os produtos.</div>`;
-    }
-  }
-
-  let galleryImages = [];
-
-  function renderGallery() {
-    const grid = document.getElementById("galleryGrid");
-    grid.innerHTML = galleryImages
-      .map(
-        (url, i) => `
-        <div class="gallery-thumb">
-          <img src="${esc(url)}" alt="Foto ${i + 1}" onerror="this.closest('.gallery-thumb').classList.add('broken')" />
-          <button type="button" class="gallery-remove" data-i="${i}">×</button>
-        </div>`
-      )
-      .join("");
-    grid.querySelectorAll(".gallery-remove").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        galleryImages.splice(Number(btn.dataset.i), 1);
-        renderGallery();
-      });
-    });
-  }
-
-  document.getElementById("addGalleryImageBtn").addEventListener("click", () => {
-    const input = document.getElementById("pGalleryUrlInput");
-    const url = input.value.trim();
-    if (!url) return;
-    galleryImages.push(url);
-    input.value = "";
-    renderGallery();
-  });
-  document.getElementById("pGalleryUrlInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      document.getElementById("addGalleryImageBtn").click();
-    }
-  });
-
-  function updateImagePreview() {
-    const url = document.getElementById("pImageUrl").value.trim();
-    const box = document.getElementById("imagePreviewBox");
-    box.innerHTML = url ? `<img src="${esc(url)}" alt="Preview" onerror="this.style.display='none'" />` : "";
-  }
-  document.getElementById("pImageUrl").addEventListener("input", updateImagePreview);
-
-  function openProductForm(product) {
-    document.getElementById("productForm").style.display = "block";
-    document.getElementById("productFormTitle").textContent = product ? "Editar produto" : "Novo produto";
-    document.getElementById("pId").value = product ? product.id : "";
-    document.getElementById("pName").value = product ? product.name : "";
-    document.getElementById("pShortDesc").value = product ? product.shortDesc : "";
-    document.getElementById("pDescription").value = product ? product.description : "";
-    document.getElementById("pPrice").value = product ? product.price : "";
-    document.getElementById("pFeatures").value = product ? (product.features || []).join("\n") : "";
-    document.getElementById("pImageUrl").value = product ? (product.imageUrl || "") : "";
-    updateImagePreview();
-    galleryImages = product ? [...(product.images || [])] : [];
-    renderGallery();
-  }
-
-  document.getElementById("newProductBtn").addEventListener("click", () => openProductForm(null));
-  document.getElementById("cancelProductBtn").addEventListener("click", () => {
-    document.getElementById("productForm").style.display = "none";
-  });
-
-  // Aceita "497", "497.50" ou o formato brasileiro "497,50" / "1.497,50"
-  function parseBRLPrice(raw) {
-    const value = raw.trim();
-    if (!value) return NaN;
-    if (value.includes(",")) {
-      return Number(value.replace(/\./g, "").replace(",", "."));
-    }
-    return Number(value);
-  }
-
-  document.getElementById("saveProductBtn").addEventListener("click", async () => {
-    const id = document.getElementById("pId").value;
-    const name = document.getElementById("pName").value.trim();
-    const shortDesc = document.getElementById("pShortDesc").value.trim();
-    const description = document.getElementById("pDescription").value.trim();
-    const price = parseBRLPrice(document.getElementById("pPrice").value);
-
-    if (!name || !shortDesc || !description) {
-      alert("Preencha nome, descrição curta e descrição completa.");
-      return;
-    }
-    if (Number.isNaN(price) || price <= 0) {
-      alert("Preencha um preço válido (ex: 497 ou 497,00).");
-      return;
-    }
-
-    const payload = {
-      name,
-      shortDesc,
-      description,
-      price,
-      imageUrl: document.getElementById("pImageUrl").value.trim() || null,
-      images: galleryImages,
-      features: document.getElementById("pFeatures").value.split("\n").map((f) => f.trim()).filter(Boolean),
-    };
-
-    const btn = document.getElementById("saveProductBtn");
-    btn.disabled = true;
-    btn.textContent = "Salvando...";
-    try {
-      if (id) await API.put(`/products/${id}`, payload);
-      else await API.post("/products", payload);
-      document.getElementById("productForm").style.display = "none";
-      loadProducts();
-    } catch (e) {
-      alert(e.message || "Não foi possível salvar o produto.");
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Salvar";
-    }
-  });
-
-  // ---------- Users tab ----------
-  let currentUserSearch = "";
-
-  async function loadUsers() {
-    const wrap = document.getElementById("usersTableWrap");
-    try {
-      const qs = currentUserSearch ? `?q=${encodeURIComponent(currentUserSearch)}` : "";
-      const { users } = await API.get(`/admin/users${qs}`);
-      const me = API.user();
-      wrap.innerHTML = users.length
-        ? `<table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Admin</th><th>Pedidos</th><th>Último login</th><th>Desde</th><th></th></tr></thead>
-           <tbody>${users
-             .map((u) => {
-               const locked = u.lockedUntil && new Date(u.lockedUntil) > new Date();
-               return `<tr>
-                <td>${esc(u.name)}</td>
-                <td>${esc(u.email)}</td>
-                <td>${esc(u.phone || "—")}</td>
-                <td>${u.isAdmin ? "Sim" : "Não"}</td>
-                <td>${u._count ? u._count.orders : 0}</td>
-                <td>${u.lastLoginAt ? `${formatDate(u.lastLoginAt)}<br /><span class="helper" style="margin:0;">${esc(u.lastLoginIp || "—")}</span>` : "nunca"}${
-                  locked ? `<br /><span class="badge failed">bloqueado</span>` : ""
-                }</td>
-                <td>${formatDate(u.createdAt)}</td>
-                <td style="white-space:nowrap;">
-                  <div class="row-actions">
-                    <button class="btn btn-outline viewUserOrdersBtn" data-id="${u.id}" data-name="${esc(u.name)}">Ver pedidos</button>
-                    ${
-                      u.phone
-                        ? `<a class="btn btn-outline" href="https://wa.me/55${u.phone.replace(/\D/g, "")}" target="_blank" rel="noopener">WhatsApp</a>`
-                        : ""
-                    }
-                    <a class="btn btn-outline" href="mailto:${esc(u.email)}">E-mail</a>
-                    ${locked ? `<button class="btn btn-outline unlockUserBtn" data-id="${u.id}" data-name="${esc(u.name)}">Desbloquear</button>` : ""}
-                    ${
-                      me && u.id === me.id
-                        ? ""
-                        : `<button class="btn btn-outline toggleAdminBtn" data-id="${u.id}" data-admin="${u.isAdmin}">${u.isAdmin ? "Remover admin" : "Tornar admin"}</button>
-                           <button class="btn btn-outline resetPasswordBtn" data-id="${u.id}" data-name="${esc(u.name)}">Redefinir senha</button>
-                           <button class="btn btn-danger deleteUserBtn" data-id="${u.id}" data-name="${esc(u.name)}">Excluir conta</button>`
-                    }
-                  </div>
-                </td>
-              </tr>`;
-             })
-             .join("")}</tbody></table>`
-        : `<div class="empty-state">Nenhum usuário encontrado.</div>`;
-
-      wrap.querySelectorAll(".viewUserOrdersBtn").forEach((btn) =>
-        btn.addEventListener("click", () => openUserOrdersModal(btn.dataset.id, btn.dataset.name))
-      );
-
-      wrap.querySelectorAll(".unlockUserBtn").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-          if (!confirm(`Desbloquear o login de ${btn.dataset.name}?`)) return;
-          try {
-            await API.put(`/admin/users/${btn.dataset.id}/unlock`, {});
-            loadUsers();
-          } catch (e) {
-            alert(e.message || "Não foi possível desbloquear esta conta.");
-          }
-        })
-      );
-
-      wrap.querySelectorAll(".toggleAdminBtn").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-          const makeAdmin = btn.dataset.admin !== "true";
-          const label = makeAdmin ? "tornar este usuário admin" : "remover o acesso admin deste usuário";
-          if (!confirm(`Tem certeza que quer ${label}?`)) return;
-          try {
-            await API.put(`/admin/users/${btn.dataset.id}`, { isAdmin: makeAdmin });
-            loadUsers();
-          } catch (e) {
-            alert(e.message || "Não foi possível atualizar o usuário.");
-          }
-        })
-      );
-
-      wrap.querySelectorAll(".resetPasswordBtn").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-          const newPassword = prompt(`Nova senha para ${btn.dataset.name} (mínimo 6 caracteres):`);
-          if (!newPassword) return;
-          if (newPassword.length < 6) {
-            alert("A senha precisa ter ao menos 6 caracteres.");
-            return;
-          }
-          try {
-            await API.put(`/admin/users/${btn.dataset.id}/reset-password`, { newPassword });
-            alert("Senha redefinida com sucesso.");
-          } catch (e) {
-            alert(e.message || "Não foi possível redefinir a senha.");
-          }
-        })
-      );
-
-      wrap.querySelectorAll(".deleteUserBtn").forEach((btn) =>
-        btn.addEventListener("click", async () => {
-          if (!confirm(`Excluir a conta de ${btn.dataset.name}? Essa ação não pode ser desfeita.`)) return;
-          try {
-            await API.del(`/admin/users/${btn.dataset.id}`);
-            loadUsers();
-          } catch (e) {
-            alert(e.message || "Não foi possível excluir esta conta.");
-          }
-        })
-      );
-    } catch (e) {
-      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar os usuários.</div>`;
-    }
-  }
-
-  let userSearchTimeout;
-  document.getElementById("userSearchInput").addEventListener("input", (e) => {
-    clearTimeout(userSearchTimeout);
-    userSearchTimeout = setTimeout(() => {
-      currentUserSearch = e.target.value.trim();
-      loadUsers();
-    }, 300);
-  });
-
-  // ---------- Audit log tab ----------
-  async function loadAuditLog() {
-    const wrap = document.getElementById("auditTableWrap");
+  loaders.audit = async () => {
     try {
       const { logs } = await API.get("/admin/audit-log");
-      wrap.innerHTML = logs.length
-        ? `<table class="admin-table"><thead><tr><th>Admin</th><th>Ação</th><th>Alvo</th><th>IP</th><th>Data</th></tr></thead>
-           <tbody>${logs
-             .map(
-               (l) => `<tr>
-                <td>${l.admin ? esc(l.admin.name) : "—"}</td>
-                <td><code>${esc(l.action)}</code></td>
-                <td>${l.targetType ? `${esc(l.targetType)}${l.targetId ? ` #${esc(l.targetId)}` : ""}` : "—"}</td>
-                <td>${esc(l.ip || "—")}</td>
-                <td>${formatDate(l.createdAt)}</td>
-              </tr>`
-             )
-             .join("")}</tbody></table>`
-        : `<div class="empty-state">Nenhuma ação registrada ainda.</div>`;
-    } catch (e) {
-      wrap.innerHTML = `<div class="empty-state">Não foi possível carregar o log de auditoria.</div>`;
-    }
+      $("auditTable").innerHTML = logs.length ? `<table class="admin-table"><thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Alvo</th><th>IP</th></tr></thead><tbody>${logs.map((l) => `<tr><td>${formatDate(l.createdAt)}</td><td>${l.admin ? esc(l.admin.name) : "—"}</td><td><code>${esc(l.action)}</code></td><td>${l.targetType ? `${esc(l.targetType)}${l.targetId ? ` #${esc(l.targetId)}` : ""}` : "—"}</td><td>${esc(l.ip || "—")}</td></tr>`).join("")}</tbody></table>` : emptyRow("Nenhuma ação registrada.");
+    } catch (e) { $("auditTable").innerHTML = emptyRow("Não foi possível carregar."); }
+  };
+  $("clearAudit").addEventListener("click", async () => {
+    if (!(await ask({ title: "Limpar auditoria", message: "Apagar o histórico de ações administrativas? Isso remove o rastro de quem fez o quê.", confirmText: "Apagar", danger: true }))) return;
+    try { const r = await API.del("/admin/audit-log"); toast(`${r.count} registro(s) removido(s).`, "success"); loaders.audit(); } catch (e) { toast(e.message, "error"); }
+  });
+
+  /* ---------- APARÊNCIA ---------- */
+  const PRESETS = [["Ouro", "#c9a45c"], ["Prata", "#b8bcc4"], ["Esmeralda", "#4fae86"], ["Safira", "#5b8def"], ["Rubi", "#d6546a"], ["Cobre", "#c9825c"]];
+  function shade(hex, amount) {
+    const n = parseInt(hex.slice(1), 16), target = amount >= 0 ? 255 : 0, k = Math.abs(amount);
+    const ch = (v) => Math.round(v + (target - v) * k);
+    return "#" + [ch((n >> 16) & 255), ch((n >> 8) & 255), ch(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("");
   }
-
-  document.getElementById("clearAuditBtn").addEventListener("click", async () => {
-    if (!confirm("Isso vai apagar permanentemente todo o log de auditoria. Continuar?")) return;
-    try {
-      const result = await API.del("/admin/audit-log");
-      alert(`${result.count} registro(s) de auditoria removido(s).`);
-      loadAuditLog();
-    } catch (e) {
-      alert(e.message || "Não foi possível limpar o log de auditoria.");
-    }
-  });
-
-  // ---------- User orders modal ----------
-  async function openUserOrdersModal(userId, userName) {
-    document.getElementById("userOrdersModal").classList.add("open");
-    document.getElementById("userOrdersTitle").textContent = `Pedidos de ${userName}`;
-    const body = document.getElementById("userOrdersBody");
-    body.innerHTML = `<div class="empty-state">carregando...</div>`;
-    try {
-      const { orders } = await API.get(`/admin/users/${userId}/orders`);
-      body.innerHTML = orders.length
-        ? renderOrdersTable(orders)
-        : `<div class="empty-state">Este cliente ainda não fez nenhum pedido.</div>`;
-      bindStatusSelects(body);
-    } catch (e) {
-      body.innerHTML = `<div class="empty-state">Não foi possível carregar os pedidos.</div>`;
-    }
+  function setAccent(hex) {
+    if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
+    const root = document.documentElement.style;
+    root.setProperty("--gold", hex); root.setProperty("--gold-l", shade(hex, 0.32)); root.setProperty("--gold-d", shade(hex, -0.35));
+    $("accentCustom").value = hex; $("accentHex").value = hex;
+    document.querySelectorAll(".swatch").forEach((s) => s.classList.toggle("active", s.dataset.color.toLowerCase() === hex.toLowerCase()));
   }
-
-  document.getElementById("closeUserOrdersModal").addEventListener("click", () => {
-    document.getElementById("userOrdersModal").classList.remove("open");
+  $("swatches").innerHTML = PRESETS.map(([n, c]) => `<button type="button" class="swatch" data-color="${c}" title="${n}" aria-label="${n}" style="background:${c}"></button>`).join("");
+  document.querySelectorAll(".swatch").forEach((s) => s.addEventListener("click", () => setAccent(s.dataset.color)));
+  $("accentCustom").addEventListener("input", (e) => setAccent(e.target.value));
+  $("accentHex").addEventListener("input", (e) => setAccent(e.target.value.trim()));
+  $("saveAccent").addEventListener("click", async () => {
+    try { await API.put("/admin/settings", { themeAccent: $("accentHex").value.trim() }); localStorage.removeItem("nb_config"); toast("Aparência salva. O site já usa a nova cor.", "success"); }
+    catch (e) { toast(e.message || "Não foi possível salvar.", "error"); }
   });
-  document.getElementById("userOrdersModal").addEventListener("click", (e) => {
-    if (e.target.id === "userOrdersModal") e.currentTarget.classList.remove("open");
+  $("resetAccent").addEventListener("click", async () => {
+    try { await API.put("/admin/settings", { themeAccent: "" }); localStorage.removeItem("nb_config"); toast("Tema padrão restaurado.", "success"); setTimeout(() => location.reload(), 700); }
+    catch (e) { toast(e.message || "Não foi possível restaurar.", "error"); }
   });
+  loaders.appearance = async () => {
+    try { const { settings } = await API.get("/admin/settings"); if (settings.themeAccent) setAccent(settings.themeAccent); } catch (e) { /* mantém */ }
+  };
 
-  // ---------- Settings tab ----------
-  async function loadSettings() {
+  /* ---------- CONFIGURAÇÕES ---------- */
+  loaders.settings = async () => {
     try {
       const { settings } = await API.get("/admin/settings");
-      document.getElementById("cfgDiscord").value = settings.discordUrl || "";
-      document.getElementById("cfgWhatsapp").value = settings.whatsappUrl || "";
-      document.getElementById("cfgEmail").value = settings.contactEmail || "";
-      document.getElementById("cfgAnnouncement").value = settings.announcement || "";
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
-    const successBox = document.getElementById("settingsSuccess");
-    successBox.className = "msg";
-    successBox.textContent = "";
+      $("cfgSiteName").value = settings.siteName || ""; $("cfgLogo").value = settings.logoUrl || "";
+      $("cfgDiscord").value = settings.discordUrl || ""; $("cfgWhatsapp").value = settings.whatsappUrl || "";
+      $("cfgEmail").value = settings.contactEmail || ""; $("cfgAnnouncement").value = settings.announcement || "";
+    } catch (e) { toast("Não foi possível carregar as configurações.", "error"); }
     try {
-      await API.put("/admin/settings", {
-        discordUrl: document.getElementById("cfgDiscord").value.trim(),
-        whatsappUrl: document.getElementById("cfgWhatsapp").value.trim(),
-        contactEmail: document.getElementById("cfgEmail").value.trim(),
-        announcement: document.getElementById("cfgAnnouncement").value.trim(),
-      });
-      successBox.textContent = "Configurações salvas.";
-      successBox.className = "msg success";
-      setTimeout(() => {
-        successBox.className = "msg";
-        successBox.textContent = "";
-      }, 3000);
-    } catch (e) {
-      alert(e.message || "Não foi possível salvar as configurações.");
-    }
+      const { gateways, appUrl } = await API.get("/admin/system");
+      const row = (name, on, hint) => `<div class="history-row"><strong><span class="status-dot ${on ? "ok" : ""}"></span>${name}</strong><span>${on ? "Configurado" : "Não configurado"}${hint ? ` · ${hint}` : ""}</span></div>`;
+      $("gatewayStatus").innerHTML = row("Plumify (Pix e cartão)", gateways.plumify, "PLUMIFY_API_TOKEN e PLUMIFY_OFFER_HASH") + row("Stripe (cartão, alternativa)", gateways.stripe, "STRIPE_SECRET_KEY e STRIPE_WEBHOOK_SECRET") + row("Mercado Pago (Pix, alternativa)", gateways.mercadopago, "MP_ACCESS_TOKEN") + (appUrl ? `<div class="history-row"><strong>Endereço do site</strong><span>${esc(appUrl)}</span></div>` : "");
+    } catch (e) { $("gatewayStatus").innerHTML = emptyRow("Não foi possível ler o status."); }
+  };
+  $("saveSettings").addEventListener("click", async () => {
+    try {
+      await API.put("/admin/settings", { siteName: $("cfgSiteName").value, logoUrl: $("cfgLogo").value, discordUrl: $("cfgDiscord").value, whatsappUrl: $("cfgWhatsapp").value, contactEmail: $("cfgEmail").value, announcement: $("cfgAnnouncement").value });
+      localStorage.removeItem("nb_config");
+      toast("Configurações salvas.", "success");
+    } catch (e) { toast(e.message || "Não foi possível salvar.", "error"); }
   });
-
-  document.getElementById("saveAdminPasswordBtn").addEventListener("click", async () => {
-    const errorBox = document.getElementById("adminPwError");
-    const successBox = document.getElementById("adminPwSuccess");
-    errorBox.className = "msg";
-    errorBox.textContent = "";
-    successBox.className = "msg";
-    successBox.textContent = "";
-
-    const currentPassword = document.getElementById("adminCurrentPassword").value;
-    const newPassword = document.getElementById("adminNewPassword").value;
-    if (!currentPassword || !newPassword) {
-      errorBox.textContent = "Preencha a senha atual e a nova senha.";
-      errorBox.className = "msg error";
-      return;
-    }
+  $("savePassword").addEventListener("click", async () => {
+    const currentPassword = $("pwCurrent").value, newPassword = $("pwNew").value;
+    if (!currentPassword || !newPassword) return toast("Preencha a senha atual e a nova.", "error");
     try {
       const data = await API.put("/auth/profile", { currentPassword, newPassword });
-      API.setToken(data.token);
-      API.setUser(data.user);
-      successBox.textContent = "Senha atualizada com sucesso.";
-      successBox.className = "msg success";
-      document.getElementById("adminCurrentPassword").value = "";
-      document.getElementById("adminNewPassword").value = "";
-    } catch (err) {
-      errorBox.textContent = err.message || "Não foi possível atualizar a senha.";
-      errorBox.className = "msg error";
-    }
+      API.setToken(data.token); API.setUser(data.user);
+      $("pwCurrent").value = ""; $("pwNew").value = "";
+      toast("Senha atualizada.", "success");
+    } catch (e) { toast(e.message || "Não foi possível atualizar a senha.", "error"); }
   });
 
-  (async () => {
-    const ok = await checkAccess();
-    if (ok) loadDashboard();
-  })();
+  boot();
+})();
 </script>
 </body>
 </html>

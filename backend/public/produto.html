@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Produto — NULLBANKER</title>
-<link rel="icon" href="/img/logo.svg" />
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <header class="topbar">
   <div class="wrap">
-    <a href="/" class="logo"><img src="/img/logo.svg" alt="NULLBANKER" />NULLBANKER</a>
+    <a href="/" class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></a>
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html" class="active">Produtos</a>
@@ -97,7 +97,7 @@
       <div>
         ${slideImages.length ? renderSlider(slideImages) : `<div class="product-hero-media"><img src="/img/fedora.svg" alt="" style="width:42%;height:auto;object-fit:contain;filter:none;opacity:.7" /></div>`}
         <div class="eyebrow-num mt-40">Produto</div>
-        <h2>${esc(p.name)}</h2>
+        <h2>${esc(p.name)} ${p.isFree ? '<span class="price-free" style="margin-left:10px;">GRÁTIS</span>' : ""}</h2>
         <p class="lede">${esc(p.description)}</p>
         <ul class="feature-list">
           ${(p.features || []).map((f) => `<li>${esc(f)}</li>`).join("")}
@@ -111,10 +111,24 @@
           </div>
           <div class="checkout-price-row">
             <span>Valor total</span>
-            <span class="checkout-price">${formatBRL(p.price)}</span>
+            <span class="checkout-price">${p.isFree ? "GRÁTIS" : formatBRL(p.price)}</span>
           </div>
 
-          <form id="orderForm">
+          <div id="buyGate">
+            ${p.isFree
+              ? `<button type="button" class="btn btn-primary btn-block" id="freeDownloadBtn" ${p.hasDownload ? "" : "disabled"}>${p.hasDownload ? "Baixar grátis" : "Download em breve"}</button>
+                 <p class="checkout-note">Grátis, mas é preciso estar logado para baixar.</p>`
+              : `<button type="button" class="btn btn-primary btn-block" id="startBuyBtn">Comprar agora</button>
+                 <p class="checkout-note">Para comprar é preciso entrar ou criar uma conta. Leva menos de um minuto.</p>`}
+          </div>
+
+          <div id="ownedBox" style="display:none;">
+            <p class="owned-note" style="margin-bottom:14px;">✓ Você já tem este site</p>
+            <button type="button" class="btn btn-primary btn-block" id="ownedDownloadBtn">Baixar agora</button>
+            <p class="checkout-note">Também fica em Minha conta &rarr; Meus Sites.</p>
+          </div>
+
+          <form id="orderForm" style="display:none;">
             <div class="field">
               <label for="customerName">Nome completo</label>
               <input type="text" id="customerName" required />
@@ -208,6 +222,7 @@
 
     setupInstallments(p.price);
     bindCardMasks();
+    setupGate(p);
 
     document.querySelectorAll(".pay-option").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -228,6 +243,46 @@
     });
 
     document.getElementById("orderForm").addEventListener("submit", handleSubmit);
+  }
+
+
+  // ---------- trava de login: comprar e baixar só logado ----------
+  function setupGate(p) {
+    const freeBtn = document.getElementById("freeDownloadBtn");
+    if (freeBtn) freeBtn.addEventListener("click", () => NB.download(p.id, freeBtn));
+
+    const buyBtn = document.getElementById("startBuyBtn");
+    if (buyBtn) {
+      buyBtn.addEventListener("click", () => {
+        NB.requireLogin("Entre ou crie sua conta para comprar este site.", (user) => openCheckout(user));
+      });
+    }
+
+    const ownedBtn = document.getElementById("ownedDownloadBtn");
+    if (ownedBtn) ownedBtn.addEventListener("click", () => NB.download(p.id, ownedBtn));
+
+    // Quem já comprou vê o botão de baixar no lugar do checkout.
+    if (!p.isFree && isLoggedIn()) {
+      API.get("/library").then(({ sites }) => {
+        const owned = sites.find((x) => x.id === p.id && x.source === "purchase");
+        if (owned && owned.hasDownload) {
+          document.getElementById("buyGate").style.display = "none";
+          document.getElementById("orderForm").style.display = "none";
+          document.getElementById("ownedBox").style.display = "block";
+        }
+      }).catch(() => {});
+    }
+  }
+
+  function openCheckout(user) {
+    document.getElementById("buyGate").style.display = "none";
+    const form = document.getElementById("orderForm");
+    form.style.display = "block";
+    const nameInput = document.getElementById("customerName");
+    const emailInput = document.getElementById("customerEmail");
+    if (user && !nameInput.value) nameInput.value = user.name || "";
+    if (user && !emailInput.value) emailInput.value = user.email || "";
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function submitLabel() {

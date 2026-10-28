@@ -23,7 +23,7 @@ if (process.env.MP_ACCESS_TOKEN) {
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
 // POST /api/orders -> cria um pedido e inicia o pagamento
-router.post("/", optionalAuth, async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   try {
     const {
       productId,
@@ -57,7 +57,7 @@ router.post("/", optionalAuth, async (req, res) => {
 
     const order = await prisma.order.create({
       data: {
-        userId: req.user ? req.user.id : null,
+        userId: req.user.id,
         productId: product.id,
         customerName,
         customerEmail,
@@ -156,6 +156,10 @@ router.post("/", optionalAuth, async (req, res) => {
     }
 
     // ---------- PIX ----------
+    if (Number(product.price) <= 0) {
+      return res.status(400).json({ error: "Este produto é grátis: entre na sua conta e baixe direto, sem pagamento." });
+    }
+
     const pixGateway = gatewayName;
 
     if (pixGateway === "plumify") {

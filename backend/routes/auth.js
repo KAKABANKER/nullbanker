@@ -105,6 +105,10 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Credenciais inválidas." });
     }
 
+    if (user.isBanned) {
+      return res.status(403).json({ error: "Conta suspensa. Fale com o suporte." });
+    }
+
     await prisma.user.update({
       where: { id: user.id },
       data: {

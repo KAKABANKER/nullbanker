@@ -1,5 +1,14 @@
 const crypto = require("crypto");
 
+// ============================================
+// CREDENCIAIS PLUMIFY — SEMPRE VIA VARIÁVEIS DE AMBIENTE
+// Nunca coloque token/hash direto no código: o repositório é versionado
+// e qualquer pessoa com acesso ao código passaria a ter acesso à conta.
+//   PLUMIFY_API_TOKEN       token da API (painel da Plumify)
+//   PLUMIFY_OFFER_HASH      hash da oferta/produto
+//   PLUMIFY_WEBHOOK_SECRET  (opcional) segredo do webhook; se ausente, é
+//                           derivado automaticamente do JWT_SECRET
+// ============================================
 const API_TOKEN = process.env.PLUMIFY_API_TOKEN || "";
 const OFFER_HASH = process.env.PLUMIFY_OFFER_HASH || "";
 const WEBHOOK_SECRET =
@@ -7,10 +16,22 @@ const WEBHOOK_SECRET =
   (process.env.JWT_SECRET
     ? crypto.createHmac("sha256", process.env.JWT_SECRET).update("plumify-webhook").digest("hex")
     : "");
+// A API da Plumify passou a exigir "operation_type". O valor 1 é o que plataformas
+// do mesmo tipo documentam para venda comum — CONFIRME na documentação da Plumify.
+// Se for outro número, defina PLUMIFY_OPERATION_TYPE no Render (sem mexer no código).
+const OPERATION_TYPE = Number(process.env.PLUMIFY_OPERATION_TYPE) || 1;
+
 const API_BASE = "https://api.plumify.com.br/api/public/v1";
 
 const isConfigured = !!API_TOKEN && !!OFFER_HASH;
 
+/**
+ * Anexa um token próprio (não fornecido pela Plumify) na query string da
+ * postback_url. Isso não substitui uma eventual assinatura de webhook da
+ * própria gateway, mas evita que qualquer pessoa que descubra a URL do
+ * webhook consiga forjar confirmações de pagamento — só aceitamos o POST
+ * se o token bater com o configurado no servidor (ver PLUMIFY_WEBHOOK_SECRET).
+ */
 function signedPostbackUrl(postbackUrl) {
   if (!WEBHOOK_SECRET) return postbackUrl;
   const separator = postbackUrl.includes("?") ? "&" : "?";
@@ -18,6 +39,7 @@ function signedPostbackUrl(postbackUrl) {
 }
 
 function verifyWebhookToken(token) {
+  // Falha fechada: sem segredo (ou sem token na requisição) nada é aceito.
   if (!WEBHOOK_SECRET) return false;
   if (!token) return false;
   const a = Buffer.from(String(token));
@@ -64,6 +86,9 @@ async function callPlumify(payload) {
   return data;
 }
 
+/**
+ * Cria uma transação Pix na Plumify.
+ */
 async function createPixTransaction({
   amountInReais,
   title,
@@ -81,10 +106,10 @@ async function createPixTransaction({
   const payload = {
     amount: amountCents,
     offer_hash: OFFER_HASH,
+    operation_type: OPERATION_TYPE,
     payment_method: "pix",
-    operation_type: "pix",           // ← CAMPO OBRIGATÓRIO ADICIONADO
     customer: buildCustomer({ customerName, customerEmail, customerPhone, customerCpf, address }),
-    cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1 }],
+    cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1, operation_type: OPERATION_TYPE }],
     expire_in_days: 1,
     postback_url: signedPostbackUrl(postbackUrl),
   };
@@ -103,6 +128,9 @@ async function createPixTransaction({
   };
 }
 
+/**
+ * Cria uma transação de cartão de crédito na Plumify.
+ */
 async function createCreditCardTransaction({
   amountInReais,
   title,
@@ -126,11 +154,11 @@ async function createCreditCardTransaction({
   const payload = {
     amount: amountCents,
     offer_hash: OFFER_HASH,
+    operation_type: OPERATION_TYPE,
     payment_method: "credit_card",
-    operation_type: "credit_card",   // ← CAMPO OBRIGATÓRIO ADICIONADO
     installments: Math.min(12, Math.max(1, Math.floor(Number(installments)) || 1)),
     customer: buildCustomer({ customerName, customerEmail, customerPhone, customerCpf, address }),
-    cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1 }],
+    cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1, operation_type: OPERATION_TYPE }],
     card: {
       number: cleanNumber,
       cvv: String(card.cvv),

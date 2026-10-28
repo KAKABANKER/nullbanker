@@ -14,8 +14,10 @@ model User {
   phone         String?
   password      String
   isAdmin       Boolean  @default(false)
+  isBanned      Boolean  @default(false)
   createdAt     DateTime @default(now())
   orders        Order[]
+  downloads     Download[]
 
   // Segurança de login
   loginAttempts Int       @default(0)
@@ -52,11 +54,13 @@ model Product {
   price       Float
   imageUrl    String?
   images      String[] @default([])
+  downloadUrl String? // link do arquivo (privado: nunca sai nas rotas públicas)
   features    String[] @default([])
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orders      Order[]
+  downloads   Download[]
 }
 
 model Order {
@@ -104,5 +108,22 @@ model Settings {
   whatsappUrl  String?
   contactEmail String?
   announcement String? // aviso opcional exibido no topo do site
+  siteName     String?
+  logoUrl      String?
+  themeAccent  String? // cor de destaque do tema (hex)
   updatedAt    DateTime @updatedAt
+}
+
+// Histórico de downloads (quem baixou o quê e quando).
+model Download {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
 }

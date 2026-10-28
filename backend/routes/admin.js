@@ -33,7 +33,7 @@ async function logAction(req, action, { targetType, targetId, detail } = {}) {
 // GET /api/admin/stats -> números gerais para o topo do dashboard
 router.get("/stats", async (req, res) => {
   try {
-    const [totalVisits, totalOrders, paidOrders, revenueAgg, totalProducts, totalUsers, pendingOrders] =
+    const [totalVisits, totalOrders, paidOrders, revenueAgg, totalProducts, totalUsers, pendingOrders, totalDownloads] =
       await Promise.all([
         prisma.visit.count(),
         prisma.order.count(),
@@ -42,6 +42,7 @@ router.get("/stats", async (req, res) => {
         prisma.product.count(),
         prisma.user.count(),
         prisma.order.count({ where: { status: "pending" } }),
+        prisma.download.count(),
       ]);
 
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -56,6 +57,7 @@ router.get("/stats", async (req, res) => {
       revenue: revenueAgg._sum.amount || 0,
       totalProducts,
       totalUsers,
+      totalDownloads,
     });
   } catch (err) {
     console.error("Erro ao carregar estatísticas:", err);
@@ -104,6 +106,19 @@ router.get("/products", async (req, res) => {
     console.error("Erro ao listar produtos (admin):", err);
     res.status(500).json({ error: "Não foi possível carregar os produtos." });
   }
+});
+
+// GET /api/admin/system -> quais gateways estão configurados (as chaves ficam só no servidor)
+router.get("/system", (req, res) => {
+  const plumify = require("../services/plumify");
+  res.json({
+    gateways: {
+      plumify: !!plumify.isConfigured,
+      stripe: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
+      mercadopago: !!process.env.MP_ACCESS_TOKEN,
+    },
+    appUrl: process.env.APP_URL || "",
+  });
 });
 
 // GET /api/admin/orders -> lista de pedidos (com filtro opcional de status e busca)
@@ -204,6 +219,9 @@ router.put("/orders/:id", async (req, res) => {
   try {
     const { status } = req.body;
     const id = Number(req.params.id);
+    if (!["pending", "paid", "failed", "cancelled", "refunded"].includes(status)) {
+      return res.status(400).json({ error: "Status inválido." });
+    }
     const before = await prisma.order.findUnique({ where: { id } });
     const order = await prisma.order.update({ where: { id }, data: { status } });
 
@@ -284,6 +302,7 @@ router.get("/users", async (req, res) => {
         email: true,
         phone: true,
         isAdmin: true,
+        isBanned: true,
         createdAt: true,
         lastLoginAt: true,
         lastLoginIp: true,
@@ -332,20 +351,38 @@ router.get("/settings", async (req, res) => {
 // PUT /api/admin/settings -> atualizar configurações do site
 router.put("/settings", async (req, res) => {
   try {
-    const { discordUrl, whatsappUrl, contactEmail, announcement } = req.body;
+    const body = req.body || {};
+    const data = {};
+    const text = (v, max) => String(v ?? "").trim().slice(0, max) || null;
+
+    if (body.discordUrl !== undefined) data.discordUrl = text(body.discordUrl, 300);
+    if (body.whatsappUrl !== undefined) data.whatsappUrl = text(body.whatsappUrl, 300);
+    if (body.contactEmail !== undefined) data.contactEmail = text(body.contactEmail, 200);
+    if (body.announcement !== undefined) data.announcement = text(body.announcement, 300);
+    if (body.siteName !== undefined) data.siteName = text(body.siteName, 40);
+
+    if (body.logoUrl !== undefined) {
+      const v = text(body.logoUrl, 500);
+      if (v && !/^https?:\/\//i.test(v) && !(v.startsWith("/") && !v.startsWith("//"))) {
+        return res.status(400).json({ error: "O link da logo precisa começar com http(s):// ou com /." });
+      }
+      data.logoUrl = v;
+    }
+    if (body.themeAccent !== undefined) {
+      const v = text(body.themeAccent, 7);
+      if (v && !/^#[0-9a-fA-F]{6}$/.test(v)) {
+        return res.status(400).json({ error: "Cor inválida. Use o formato #RRGGBB." });
+      }
+      data.themeAccent = v;
+    }
+
     const settings = await prisma.settings.upsert({
       where: { id: 1 },
-      update: {
-        ...(discordUrl !== undefined ? { discordUrl } : {}),
-        ...(whatsappUrl !== undefined ? { whatsappUrl } : {}),
-        ...(contactEmail !== undefined ? { contactEmail } : {}),
-        ...(announcement !== undefined ? { announcement } : {}),
-      },
-      create: { id: 1, discordUrl, whatsappUrl, contactEmail, announcement },
+      update: data,
+      create: { id: 1, ...data },
     });
 
-    await logAction(req, "settings.update", { targetType: "Settings", targetId: 1, detail: req.body });
-
+    await logAction(req, "settings.update", { targetType: "Settings", targetId: 1, detail: data });
     res.json({ settings });
   } catch (err) {
     console.error("Erro ao salvar configurações:", err);
@@ -358,6 +395,9 @@ router.put("/users/:id", async (req, res) => {
   try {
     const { isAdmin } = req.body;
     const id = Number(req.params.id);
+    if (req.user.id === id) {
+      return res.status(400).json({ error: "Você não pode alterar o próprio acesso de admin." });
+    }
     const user = await prisma.user.update({
       where: { id },
       data: { isAdmin: Boolean(isAdmin) },
@@ -376,52 +416,61 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
-// DELETE /api/admin/users/:id -> excluir conta de um cliente
-router.delete("/users/:id", async (req, res) => {
+
+// PUT /api/admin/users/:id/ban -> banir/desbanir (conta banida não entra nem compra)
+router.put("/users/:id/ban", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (req.user && req.user.id === id) {
-      return res.status(400).json({ error: "Você não pode excluir a própria conta por aqui." });
+    const banned = Boolean(req.body && req.body.banned);
+    if (req.user.id === id) return res.status(400).json({ error: "Você não pode banir a própria conta." });
+    const target = await prisma.user.findUnique({ where: { id }, select: { isAdmin: true } });
+    if (!target) return res.status(404).json({ error: "Usuário não encontrado." });
+    if (target.isAdmin && banned) {
+      return res.status(400).json({ error: "Remova o acesso de admin antes de banir esta conta." });
     }
-
-    // Mantém o histórico de pedidos (nome/e-mail já ficam salvos no próprio pedido),
-    // só desvincula da conta que será removida.
-    await prisma.order.updateMany({ where: { userId: id }, data: { userId: null } });
-    await prisma.user.delete({ where: { id } });
-
-    await logAction(req, "user.delete", { targetType: "User", targetId: id });
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Erro ao excluir usuário:", err);
-    res.status(500).json({ error: "Não foi possível excluir este usuário." });
-  }
-});
-
-// PUT /api/admin/users/:id/reset-password -> definir uma nova senha para o cliente
-router.put("/users/:id/reset-password", async (req, res) => {
-  try {
-    const { newPassword } = req.body;
-    if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ error: "A nova senha precisa ter ao menos 6 caracteres." });
-    }
-    const id = Number(req.params.id);
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { id },
-      // Zera tentativas/bloqueio de login ao redefinir a senha manualmente.
-      data: { password: hashed, loginAttempts: 0, lockedUntil: null },
+      data: { isBanned: banned },
+      select: { id: true, name: true, email: true, isBanned: true },
     });
-
-    await logAction(req, "user.reset_password", { targetType: "User", targetId: id });
-
-    res.json({ ok: true });
+    await logAction(req, banned ? "user.ban" : "user.unban", { targetType: "User", targetId: id });
+    res.json({ user });
   } catch (err) {
-    console.error("Erro ao redefinir senha do usuário:", err);
-    res.status(500).json({ error: "Não foi possível redefinir a senha deste usuário." });
+    console.error("Erro ao banir usuário:", err);
+    res.status(500).json({ error: "Não foi possível atualizar o usuário." });
   }
 });
 
+// PUT /api/admin/users/:id/profile -> editar nome, e-mail e telefone
+router.put("/users/:id/profile", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { name, email, phone } = req.body || {};
+    const data = {};
+    if (name !== undefined) {
+      if (!String(name).trim()) return res.status(400).json({ error: "O nome não pode ficar em branco." });
+      data.name = String(name).trim().slice(0, 120);
+    }
+    if (email !== undefined) {
+      const e = String(email).trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return res.status(400).json({ error: "E-mail inválido." });
+      data.email = e;
+    }
+    if (phone !== undefined) data.phone = String(phone || "").trim().slice(0, 30) || null;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, name: true, email: true, phone: true },
+    });
+    await logAction(req, "user.edit", { targetType: "User", targetId: id, detail: { fields: Object.keys(data) } });
+    res.json({ user });
+  } catch (err) {
+    if (err.code === "P2002") return res.status(409).json({ error: "Já existe outra conta com este e-mail." });
+    console.error("Erro ao editar usuário:", err);
+    res.status(500).json({ error: "Não foi possível editar o usuário." });
+  }
+});
 // PUT /api/admin/users/:id/unlock -> remove um bloqueio de login ativo
 router.put("/users/:id/unlock", async (req, res) => {
   try {

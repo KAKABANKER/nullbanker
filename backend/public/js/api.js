@@ -112,3 +112,45 @@ function formatDate(iso) {
 function qs(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
+
+// Troca por uma imagem reserva quando o arquivo principal não existe
+// (ex.: /img/logo.png ainda não enviado). Feito por JS porque a política de
+// segurança (CSP) do site bloqueia atributos inline como onerror="...".
+function setupImageFallbacks() {
+  document.querySelectorAll("img[data-fallback]").forEach((img) => {
+    const fallback = img.dataset.fallback;
+    const swap = () => {
+      if (!img.src.includes(fallback)) img.src = fallback;
+    };
+    if (img.complete && img.naturalWidth === 0) swap();
+    else img.addEventListener("error", swap, { once: true });
+  });
+  const fav = document.querySelector('link[rel="icon"][data-fallback]');
+  if (fav) {
+    const probe = new Image();
+    probe.onerror = () => { fav.href = fav.dataset.fallback; };
+    probe.src = fav.href;
+  }
+}
+document.addEventListener("DOMContentLoaded", setupImageFallbacks);
+
+// Aviso rápido no canto da tela (substitui alert()).
+function toast(message, type = "info") {
+  let wrap = document.getElementById("toastWrap");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "toastWrap";
+    wrap.className = "toast-wrap";
+    wrap.setAttribute("aria-live", "polite");
+    document.body.appendChild(wrap);
+  }
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  wrap.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("show"));
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 300);
+  }, type === "error" ? 6000 : 3500);
+}

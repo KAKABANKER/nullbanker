@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Minha conta — NULLBANKER</title>
-<link rel="icon" href="/img/logo.svg" />
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 
 <header class="topbar">
   <div class="wrap">
-    <a href="/" class="logo"><img src="/img/logo.svg" alt="NULLBANKER" />NULLBANKER</a>
+    <a href="/" class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></a>
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html">Produtos</a>
@@ -21,6 +21,17 @@
     <button class="navtoggle">menu</button>
   </div>
 </header>
+
+<section style="padding-top:64px;padding-bottom:56px;">
+  <div class="wrap">
+    <div class="eyebrow-num">Biblioteca</div>
+    <h2>Meus Sites</h2>
+    <p class="lede">Os sites que você comprou e os grátis que já baixou. Baixe de novo quando quiser.</p>
+    <div class="library-grid" id="libraryGrid"><div class="empty-state"><span class="spinner-line">carregando...</span></div></div>
+    <h3 style="margin-top:52px;">Histórico de downloads</h3>
+    <div class="history-list" id="downloadHistory"><div class="empty-state"><span class="spinner-line">carregando...</span></div></div>
+  </div>
+</section>
 
 <section style="padding-top:64px;">
   <div class="wrap two-col">
@@ -158,6 +169,38 @@
     }
   });
 
+
+  async function loadLibrary() {
+    const grid = document.getElementById("libraryGrid");
+    const history = document.getElementById("downloadHistory");
+    try {
+      const { sites, downloads } = await API.get("/library");
+      grid.innerHTML = sites.length
+        ? sites.map((x) => `
+            <div class="library-card">
+              <div class="thumb">${x.imageUrl ? `<img src="${esc(x.imageUrl)}" alt="" loading="lazy" />` : `<img class="placeholder-art" src="/img/fedora.svg" alt="" />`}</div>
+              <div class="body">
+                <h4>${esc(x.name)}</h4>
+                <div class="meta">${x.source === "purchase" ? "Comprado em " : "Grátis · baixado em "}${formatDate(x.since).slice(0, 10)}</div>
+                ${x.hasDownload
+                  ? `<button type="button" class="btn btn-primary btn-sm" data-download="${x.id}">Baixar</button>`
+                  : `<button type="button" class="btn btn-outline btn-sm" disabled>Arquivo em breve</button>`}
+              </div>
+            </div>`).join("")
+        : `<div class="empty-state">Você ainda não tem nenhum site. <a href="/produtos.html" style="color:var(--gold-l);text-decoration:underline;">Veja os produtos</a>.</div>`;
+      grid.querySelectorAll("[data-download]").forEach((btn) =>
+        btn.addEventListener("click", () => NB.download(Number(btn.dataset.download), btn))
+      );
+
+      history.innerHTML = downloads.length
+        ? downloads.map((d) => `<div class="history-row"><strong>${esc(d.product ? d.product.name : "Produto removido")}</strong><span>${formatDate(d.createdAt)}</span></div>`).join("")
+        : `<div class="empty-state">Nenhum download ainda.</div>`;
+    } catch (e) {
+      grid.innerHTML = `<div class="empty-state">Não foi possível carregar seus sites.</div>`;
+      history.innerHTML = "";
+    }
+  }
+
   async function loadOrders() {
     const list = document.getElementById("ordersList");
     try {
@@ -171,7 +214,7 @@
           <div class="statement-row">
             <span class="statement-index">${String(i + 1).padStart(2, "0")}</span>
             <span>
-              <span class="statement-name">${o.product.name}</span>
+              <span class="statement-name">${esc(o.product.name)}</span>
               <div class="statement-desc">${formatDate(o.createdAt)} · ${statusLabels[o.status] || o.status}</div>
             </span>
             <span class="statement-price">${formatBRL(o.amount)}</span>
@@ -189,6 +232,7 @@
   } else {
     loadProfile();
     loadOrders();
+    loadLibrary();
   }
 </script>
 </body>

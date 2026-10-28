@@ -15,6 +15,7 @@ const productRoutes = require("./routes/products");
 const orderRoutes = require("./routes/orders");
 const adminRoutes = require("./routes/admin");
 const webhookRoutes = require("./routes/webhooks");
+const downloadRoutes = require("./routes/downloads");
 const plumify = require("./services/plumify");
 
 const app = express();
@@ -123,6 +124,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/webhooks", webhookRoutes);
+app.use("/api", downloadRoutes); // /api/downloads/:id e /api/library
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
@@ -135,6 +137,9 @@ app.get("/api/config", async (req, res) => {
       whatsappUrl: (settings && settings.whatsappUrl) || process.env.SUPPORT_WHATSAPP_URL || "",
       contactEmail: (settings && settings.contactEmail) || "",
       announcement: (settings && settings.announcement) || "",
+      siteName: (settings && settings.siteName) || "",
+      logoUrl: (settings && settings.logoUrl) || "",
+      themeAccent: (settings && settings.themeAccent) || "",
       // "form": cartão digitado no próprio site (gateway Plumify) | "redirect": checkout hospedado (Stripe)
       cardCheckout: plumify.isConfigured ? "form" : "redirect",
     });
