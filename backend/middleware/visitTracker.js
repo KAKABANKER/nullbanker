@@ -13,8 +13,9 @@ function isLikelyBot(userAgent) {
   return BOT_PATTERNS.some((pattern) => pattern.test(userAgent));
 }
 
-// Só conta abertura de PÁGINA (a home ou um .html). Antes, cada CSS, JS, imagem
-// e favicon também virava uma "visita", inflando o número em ~6x por acesso real.
+// Só conta abertura de PÁGINA (a home ou um .html). Atalhos sem extensão
+// (/produtos, /login etc.) redirecionam para o .html correspondente — contar
+// os dois dobraria a visita real, então só o .html é contabilizado.
 function isPageView(req) {
   if (req.method !== "GET") return false;
   const p = req.path;
@@ -22,7 +23,7 @@ function isPageView(req) {
   if (p === "/admin.html" || p === "/admin") return false; // o próprio painel não conta
   if (p === "/") return true;
   if (p.endsWith(".html")) return true;
-  return !p.includes("."); // "/produtos", "/suporte"... (atalhos sem extensão)
+  return false;
 }
 
 // Mesmo visitante na mesma página em até 30 min = 1 visita só (F5 não infla).
