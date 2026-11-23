@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador — NULLBANKER</title>
+  <meta name="description" content="Ferramentas de geração e consulta: dados fictícios, QR Code, código de barras, validação de documentos e mais." />
+  <link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/gerador/css/gerador.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo">
+      <img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" />
+      <span class="logo-text">NULLBANKER</span>
+    </a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/suporte.html">Suporte</a>
+      <a href="/gerador/" class="active">Gerador</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot>
+      <a href="/login.html">Entrar</a>
+      <a href="/registro.html" class="btn-ghost-white">Criar conta</a>
+    </div>
+    <button class="navtoggle" type="button" aria-label="Abrir menu">Menu</button>
+  </div>
+</header>
+
+<section class="hero" style="padding: 60px 0 40px;">
+  <div class="wrap center-text">
+    <div class="eyebrow-num" style="justify-content:center;">Ferramentas da casa</div>
+    <h1>Gerador <em>NULLBANKER</em></h1>
+    <p class="lede" style="margin:0 auto 28px;">Dados fictícios, QR Codes, códigos de barras, validações e consultas.</p>
+  </div>
+</section>
+
+<section style="padding-top: 40px;">
+  <div class="wrap">
+    <div class="generator-grid" id="generatorGrid">
+
+      <!-- 1. Gerador de Pessoas -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <h3>Gerador de Pessoas</h3>
+        <p>Gera nomes, CPF, CNPJ, data de nascimento e endereço fictícios para testes de software.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Quantidade</label>
+            <input type="number" id="fakerQty" value="1" min="1" max="10" />
+          </div>
+          <div class="field">
+            <label>Campos</label>
+            <select id="fakerFields">
+              <option value="name,cpf,email,phone,address">Todos</option>
+              <option value="name,cpf">Nome + CPF</option>
+              <option value="name,email">Nome + E-mail</option>
+              <option value="cpf">Só CPF</option>
+              <option value="cnpj">Só CNPJ</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="faker">Gerar</button>
+        </div>
+        <div class="generator-result" id="fakerResult"></div>
+      </div>
+
+      <!-- 2. QR Code -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>
+        </div>
+        <h3>QR Code</h3>
+        <p>Gera QR Codes personalizados com cores, legenda e tamanho.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Texto ou URL</label>
+            <input type="text" id="qrText" placeholder="https://exemplo.com" />
+          </div>
+          <div class="field">
+            <label>Cor (hex)</label>
+            <input type="text" id="qrColor" value="#c9a45c" maxlength="7" />
+          </div>
+          <div class="field">
+            <label>Legenda (opcional)</label>
+            <input type="text" id="qrLabel" placeholder="NULLBANKER" />
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="qrcode">Gerar QR Code</button>
+        </div>
+        <div class="generator-result" id="qrResult"></div>
+      </div>
+
+      <!-- 3. Código de Barras -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5v14M6 5v14M9 5v14M12 5v14M15 5v14M18 5v14M21 5v14"/></svg>
+        </div>
+        <h3>Código de Barras</h3>
+        <p>Gera EAN-13, UPC-A, Code 39, Code 128 e ISBN.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Valor</label>
+            <input type="text" id="barText" placeholder="123456789012" />
+          </div>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="barType">
+              <option value="ean13">EAN-13</option>
+              <option value="upca">UPC-A</option>
+              <option value="code39">Code 39</option>
+              <option value="code128">Code 128</option>
+              <option value="isbn">ISBN</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="barcode">Gerar Código</button>
+        </div>
+        <div class="generator-result" id="barResult"></div>
+      </div>
+
+      <!-- 4. Validador CPF/CNPJ -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>
+        </div>
+        <h3>Validador de CPF/CNPJ</h3>
+        <p>Verifica se um documento é válido e retorna o valor formatado.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Documento</label>
+            <input type="text" id="valDoc" placeholder="000.000.000-00" />
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="validator">Validar</button>
+        </div>
+        <div class="generator-result" id="valResult"></div>
+      </div>
+
+      <!-- 5. Número por Extenso -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 12h10M4 17h14"/></svg>
+        </div>
+        <h3>Número por Extenso</h3>
+        <p>Converte números em texto (português, inglês, espanhol) com opção de moeda.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Número</label>
+            <input type="text" id="extNumber" placeholder="1200.50" />
+          </div>
+          <div class="field">
+            <label>Idioma</label>
+            <select id="extLang">
+              <option value="pt">Português</option>
+              <option value="en">Inglês</option>
+              <option value="es">Espanhol</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Moeda (opcional)</label>
+            <select id="extCurrency">
+              <option value="">Nenhuma</option>
+              <option value="BRL">Real (BRL)</option>
+              <option value="USD">Dólar (USD)</option>
+              <option value="EUR">Euro (EUR)</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="extenso">Converter</button>
+        </div>
+        <div class="generator-result" id="extResult"></div>
+      </div>
+
+      <!-- 6. Consulta de CEP -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21s-6-6-6-11a6 6 0 1112 0c0 5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>
+        </div>
+        <h3>Consulta de CEP</h3>
+        <p>Busca endereço completo a partir do CEP (8 dígitos).</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>CEP</label>
+            <input type="text" id="cepInput" placeholder="71205060" maxlength="8" />
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="cep">Consultar</button>
+        </div>
+        <div class="generator-result" id="cepResult"></div>
+      </div>
+
+      <!-- 7. Conversor de Moedas -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>
+        </div>
+        <h3>Conversor de Moedas</h3>
+        <p>Consulta cotação em tempo real com cache de 10 minutos.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Par de moedas</label>
+            <select id="curPair">
+              <option value="USD_BRL">Dólar → Real</option>
+              <option value="EUR_BRL">Euro → Real</option>
+              <option value="BTC_BRL">Bitcoin → Real</option>
+              <option value="BRL_USD">Real → Dólar</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="currency">Consultar Cotação</button>
+        </div>
+        <div class="generator-result" id="curResult"></div>
+      </div>
+
+      <!-- 8. Tabela Fipe -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 17h14M7 17V9l3-4h4l3 4v8"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>
+        </div>
+        <h3>Tabela Fipe</h3>
+        <p>Consulta marcas de carros, motos e caminhões.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Tipo de veículo</label>
+            <select id="fipeType">
+              <option value="1">Carro</option>
+              <option value="2">Moto</option>
+              <option value="3">Caminhão</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="fipeBrands">Listar Marcas</button>
+        </div>
+        <div class="generator-result" id="fipeResult"></div>
+      </div>
+
+      <!-- 9. Localizador de IP -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+        </div>
+        <h3>Localizador de IP</h3>
+        <p>Descobre a geolocalização de um endereço IP.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>Endereço IP</label>
+            <input type="text" id="ipInput" placeholder="8.8.8.8" />
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="geoip">Localizar</button>
+        </div>
+        <div class="generator-result" id="ipResult"></div>
+      </div>
+
+      <!-- 10. Validador de Email -->
+      <div class="generator-card">
+        <div class="generator-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        </div>
+        <h3>Validador de Email</h3>
+        <p>Verifica formato, registros MX e se é um endereço descartável.</p>
+        <div class="generator-form">
+          <div class="field">
+            <label>E-mail</label>
+            <input type="email" id="emailInput" placeholder="email@exemplo.com" />
+          </div>
+          <button type="button" class="btn btn-primary btn-block" data-action="emailValidator">Validar</button>
+        </div>
+        <div class="generator-result" id="emailResult"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer style="margin-top: 80px;">
+  <div class="wrap">
+    <div class="footer-bottom" style="border:none; padding-top:0;">
+      <span>NULLBANKER — Casa de negócios digitais</span>
+      <span>Gerador powered by <a href="https://api.invertexto.com" target="_blank" rel="noopener" style="color:var(--gold-l);">Invertexto</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="/gerador/js/gerador.js"></script>
+</body>
+</html>
