@@ -26,6 +26,16 @@ model User {
   lastLoginIp   String?
 
   auditLogs     AuditLog[]
+
+  // ---------- Loja do vendedor (marketplace) ----------
+  termsAcceptedAt      DateTime? // evidência de aceite dos Termos/Privacidade no cadastro (LGPD)
+  storeName            String?
+  storeBio             String?
+  products             Product[] @relation("ProductSeller")
+  sales                Order[]   @relation("OrderSeller")
+  plumifyApiToken      String? // guardado CRIPTOGRAFADO (services/crypto.js) — nunca em texto puro
+  plumifyOfferHash     String? // idem
+  plumifyConfigured    Boolean  @default(false) // atalho para não precisar descriptografar só pra checar
 }
 
 // Registro de ações administrativas sensíveis (quem fez o quê, quando e de onde).
@@ -61,6 +71,17 @@ model Product {
   updatedAt   DateTime @updatedAt
   orders      Order[]
   downloads   Download[]
+
+  // ---------- Marketplace ----------
+  // sellerId nulo = produto oficial NULLBANKER. Preenchido = produto de um vendedor da loja.
+  sellerId        Int?
+  seller          User?    @relation("ProductSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  // "pending" (aguardando revisão do admin) | "approved" | "rejected" — produto oficial já nasce "approved".
+  status          String   @default("approved")
+  rejectionReason String?
+  reviewedAt      DateTime?
+
+  @@index([sellerId])
 }
 
 model Order {
@@ -81,6 +102,13 @@ model Order {
   amount            Float
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  // Dono do produto no momento da compra (nulo = produto oficial). O dinheiro vai
+  // direto pra Plumify do vendedor; isso aqui é só pra ele ver a própria venda.
+  sellerId          Int?
+  seller            User?    @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: SetNull)
+
+  @@index([sellerId])
 }
 
 model Visit {

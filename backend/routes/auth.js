@@ -27,9 +27,12 @@ function signToken(user) {
 
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, termsAccepted } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Preencha nome, e-mail e senha." });
+    }
+    if (!termsAccepted) {
+      return res.status(400).json({ error: "É preciso aceitar os Termos de Uso e a Política de Privacidade." });
     }
     if (!isValidEmail(email)) {
       return res.status(400).json({ error: "E-mail inválido." });
@@ -45,7 +48,7 @@ router.post("/register", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, phone: phone || null },
+      data: { name, email, password: hashed, phone: phone || null, termsAcceptedAt: new Date() },
     });
 
     const token = signToken(user);

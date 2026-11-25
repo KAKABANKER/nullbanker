@@ -70,7 +70,13 @@
 
    <!-- SITE REAL DE VENDAS DE TELA FAKE -->
     <section class="tab-panel" id="tab-products" style="display:none;">
-      <div class="admin-toolbar"><button type="button" class="btn btn-primary" id="newProduct">+ Novo produto</button></div>
+      <div class="tabs" id="productFilters">
+        <button type="button" data-status="" class="active">Todos</button>
+        <button type="button" data-status="pending">Para revisar</button>
+        <button type="button" data-status="approved">Aprovados</button>
+        <button type="button" data-status="rejected">Recusados</button>
+      </div>
+      <div class="admin-toolbar"><button type="button" class="btn btn-primary" id="newProduct">+ Novo produto (oficial)</button></div>
 
       <div class="panel" id="productPanel" style="display:none;">
         <h3 id="productPanelTitle">Novo produto</h3>
@@ -221,6 +227,18 @@
     <div class="confirm-actions">
       <button type="button" class="btn btn-outline" id="confirmNo">Cancelar</button>
       <button type="button" class="btn btn-primary" id="confirmYes">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal-box confirm-box">
+    <h3>Recusar produto</h3>
+    <p id="rejectProductName" style="color:var(--cream-2);"></p>
+    <div class="field"><label for="rejectReason">Motivo (o vendedor vê essa mensagem)</label><textarea id="rejectReason" rows="3" maxlength="300"></textarea></div>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-outline" id="rejectCancel">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="rejectConfirm">Recusar produto</button>
     </div>
   </div>
 </div>
@@ -378,10 +396,14 @@
     try {
       const s = await API.get("/admin/stats");
       const cards = [
-        ["Receita (paga)", formatBRL(s.revenue)], ["Pedidos pagos", `${s.paidOrders}/${s.totalOrders}`], ["Pendentes", s.pendingOrders],
+        ["Receita oficial (paga)", formatBRL(s.revenue)], ["Pedidos pagos", `${s.paidOrders}/${s.totalOrders}`], ["Pendentes de pagamento", s.pendingOrders],
+        ["Volume marketplace*", formatBRL(s.marketplaceVolume || 0)], ["Produtos p/ revisar", s.pendingProducts || 0], ["Vendedores ativos", s.totalSellers || 0],
         ["Visitas (30 dias)", s.recentVisits], ["Usuários", s.totalUsers], ["Produtos", s.totalProducts], ["Downloads", s.totalDownloads || 0],
       ];
-      $("statGrid").innerHTML = cards.map(([l, v]) => `<div class="stat-cell"><div class="label">${l}</div><div class="value">${esc(v)}</div></div>`).join("");
+      $("statGrid").innerHTML = cards.map(([l, v]) => `<div class="stat-cell"><div class="label">${l}</div><div class="value">${esc(v)}</div></div>`).join("")
+        + `<p class="helper" style="grid-column:1/-1;margin:12px 0 0;">*Volume do marketplace é só informativo — esse dinheiro cai direto na Plumify de cada vendedor, nunca passa pela conta da casa.</p>`;
+      const pendingTab = document.querySelector('[data-tab="products"]');
+      if (pendingTab) pendingTab.innerHTML = "Produtos" + (s.pendingProducts ? ` <span class="badge pending" style="margin-left:6px;">${s.pendingProducts}</span>` : "");
     } catch (e) { $("statGrid").innerHTML = emptyRow("Não foi possível carregar as métricas."); }
 
     try {
@@ -506,31 +528,58 @@
     btn.disabled = false;
   });
 
+  let productStatusFilter = "";
+  const PRODUCT_STATUS_LABEL = { pending: "Em revisão", approved: "Aprovado", rejected: "Recusado" };
+
+  document.querySelectorAll("#productFilters button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#productFilters button").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active"); productStatusFilter = b.dataset.status; loaders.products();
+  }));
+
   loaders.products = async () => {
     const wrap = $("productsTable");
     try {
-      const { products } = await API.get("/admin/products");
+      const query = productStatusFilter ? `?status=${productStatusFilter}` : "";
+      const { products } = await API.get(`/admin/products${query}`);
       productsCache = products;
-      wrap.innerHTML = products.length ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Arquivo</th><th>Pedidos</th><th>Situação</th><th></th></tr></thead><tbody>${products.map((p) => `
+      wrap.innerHTML = products.length ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Vendedor</th><th>Preço</th><th>Revisão</th><th>Pedidos</th><th>Na loja</th><th></th></tr></thead><tbody>${products.map((p) => `
         <tr>
           <td>${p.imageUrl ? `<img class="thumb-sm" src="${esc(p.imageUrl)}" alt="" />` : `<span class="helper" style="margin:0;">—</span>`}</td>
           <td>${esc(p.name)}</td>
+          <td>${p.seller ? `${esc(p.seller.storeName || p.seller.name)}<br /><span class="helper" style="margin:0;">${esc(p.seller.email)}</span>` : '<span class="badge paid">Oficial</span>'}</td>
           <td>${Number(p.price) <= 0 ? '<span class="badge free">Grátis</span>' : formatBRL(p.price)}</td>
-          <td>${p.downloadUrl ? '<span class="badge paid">Tem</span>' : '<span class="badge pending">Sem arquivo</span>'}</td>
+          <td><span class="badge ${p.status === "approved" ? "paid" : p.status === "rejected" ? "banned" : "pending"}">${esc(PRODUCT_STATUS_LABEL[p.status] || p.status)}</span>${p.status === "rejected" && p.rejectionReason ? `<div class="helper" style="margin:6px 0 0;">${esc(p.rejectionReason)}</div>` : ""}</td>
           <td>${p._count ? p._count.orders : 0}</td>
-          <td>${p.active ? '<span class="badge paid">Na loja</span>' : '<span class="badge failed">Oculto</span>'}</td>
+          <td>${p.active ? '<span class="badge paid">Sim</span>' : '<span class="badge failed">Oculto</span>'}</td>
           <td><div class="row-actions">
+            ${p.sellerId && p.status === "pending" ? `
+              <button type="button" class="btn btn-primary btn-sm" data-act="approve" data-id="${p.id}">Aprovar</button>
+              <button type="button" class="btn btn-danger btn-sm" data-act="reject" data-id="${p.id}">Recusar</button>
+            ` : ""}
             <button type="button" class="btn btn-outline btn-sm" data-act="edit" data-id="${p.id}">Editar</button>
             <button type="button" class="btn btn-outline btn-sm" data-act="toggle" data-id="${p.id}">${p.active ? "Ocultar" : "Mostrar"}</button>
             <button type="button" class="btn btn-danger btn-sm" data-act="delete" data-id="${p.id}">Excluir</button>
           </div></td>
-        </tr>`).join("")}</tbody></table>` : emptyRow("Nenhum produto cadastrado.");
+        </tr>`).join("")}</tbody></table>` : emptyRow("Nenhum produto encontrado.");
 
       wrap.querySelectorAll(".thumb-sm").forEach((img) => img.addEventListener("error", () => img.remove()));
       wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
         const p = productsCache.find((x) => x.id === Number(b.dataset.id));
         if (!p) return;
         if (b.dataset.act === "edit") return openProductPanel(p);
+        if (b.dataset.act === "approve") {
+          if (!(await ask({ title: "Aprovar produto", message: `"${p.name}" vai aparecer na loja para todo mundo. Continuar?`, confirmText: "Aprovar" }))) return;
+          try { await API.put(`/admin/products/${p.id}/review`, { approve: true }); toast("Produto aprovado.", "success"); loaders.products(); }
+          catch (e) { toast(e.message || "Não foi possível aprovar.", "error"); }
+          return;
+        }
+        if (b.dataset.act === "reject") {
+          $("rejectProductName").textContent = `Produto: ${p.name}`;
+          $("rejectReason").value = "";
+          $("rejectModal").classList.add("open");
+          $("rejectModal").dataset.productId = p.id;
+          return;
+        }
         if (b.dataset.act === "toggle") {
           try { await API.put(`/products/${p.id}`, { active: !p.active }); toast(p.active ? "Produto ocultado." : "Produto visível na loja.", "success"); loaders.products(); }
           catch (e) { toast(e.message || "Não foi possível alterar.", "error"); }
@@ -619,6 +668,17 @@
     $("userEditModal").classList.add("open");
   }
   $("ueCancel").addEventListener("click", () => $("userEditModal").classList.remove("open"));
+  $("rejectCancel").addEventListener("click", () => $("rejectModal").classList.remove("open"));
+  $("rejectConfirm").addEventListener("click", async () => {
+    const id = $("rejectModal").dataset.productId;
+    try {
+      await API.put(`/admin/products/${id}/review`, { approve: false, reason: $("rejectReason").value.trim() });
+      $("rejectModal").classList.remove("open");
+      toast("Produto recusado.", "success");
+      loaders.products();
+    } catch (e) { toast(e.message || "Não foi possível recusar.", "error"); }
+  });
+
   $("ueSave").addEventListener("click", async () => {
     try {
       await API.put(`/admin/users/${$("ueId").value}/profile`, { name: $("ueName").value, email: $("ueEmail").value, phone: $("uePhone").value });

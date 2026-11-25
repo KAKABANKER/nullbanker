@@ -15,6 +15,7 @@
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html">Produtos</a>
+      <a href="/minha-loja.html">Vender</a>
       <a href="/suporte.html">Suporte</a>
     </nav>
     <div class="topbar-actions" data-auth-slot></div>
@@ -47,7 +48,11 @@
           <input type="password" id="password" required minlength="6" />
         </div>
         <p class="helper">Mínimo de 6 caracteres.</p>
-        <button type="submit" class="btn btn-primary btn-block" id="regBtn">Criar conta</button>
+        <label class="check-row" style="align-items:flex-start;">
+          <input type="checkbox" id="consentTerms" required style="margin-top:3px;" />
+          <span>Li e aceito os <a href="/termos-de-uso.html" target="_blank" style="color:var(--gold-l);text-decoration:underline;">Termos de Uso</a> e a <a href="/politica-privacidade.html" target="_blank" style="color:var(--gold-l);text-decoration:underline;">Política de Privacidade</a>.</span>
+        </label>
+        <button type="submit" class="btn btn-primary btn-block" id="regBtn" style="margin-top:20px;">Criar conta</button>
       </form>
     </div>
     <div class="auth-switch">Já tem conta? <a href="/login.html" id="toLogin">Entrar</a></div>
@@ -62,6 +67,11 @@
     const errorBox = document.getElementById("regError");
     errorBox.textContent = "";
     errorBox.classList.remove("error");
+    if (!document.getElementById("consentTerms").checked) {
+      errorBox.textContent = "É preciso aceitar os Termos de Uso e a Política de Privacidade para criar a conta.";
+      errorBox.classList.add("error");
+      return;
+    }
     const btn = document.getElementById("regBtn");
     btn.disabled = true;
     btn.textContent = "Criando conta...";
@@ -72,6 +82,7 @@
         email: document.getElementById("email").value.trim(),
         phone: document.getElementById("phone").value.trim(),
         password: document.getElementById("password").value,
+        termsAccepted: document.getElementById("consentTerms").checked,
       });
       API.setToken(data.token);
       API.setUser(data.user);

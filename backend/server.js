@@ -16,6 +16,7 @@ const orderRoutes = require("./routes/orders");
 const adminRoutes = require("./routes/admin");
 const webhookRoutes = require("./routes/webhooks");
 const downloadRoutes = require("./routes/downloads");
+const sellerRoutes = require("./routes/seller");
 const plumify = require("./services/plumify");
 
 const app = express();
@@ -125,6 +126,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/webhooks", webhookRoutes);
 app.use("/api", downloadRoutes); // /api/downloads/:id e /api/library
+app.use("/api/my", sellerRoutes); // loja do vendedor: produtos, vendas e financeiro
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

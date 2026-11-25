@@ -1,29 +1,40 @@
 const crypto = require("crypto");
 
 // ============================================
-// CREDENCIAIS PLUMIFY — SEMPRE VIA VARIÁVEIS DE AMBIENTE
-// Nunca coloque token/hash direto no código: o repositório é versionado
-// e qualquer pessoa com acesso ao código passaria a ter acesso à conta.
-//   PLUMIFY_API_TOKEN       token da API (painel da Plumify)
+// CREDENCIAIS PLUMIFY
+// A conta "oficial" (da própria NULLBANKER) continua vindo só de variáveis
+// de ambiente — nunca direto no código.
+//   PLUMIFY_API_TOKEN       token da API (painel da Plumify da casa)
 //   PLUMIFY_OFFER_HASH      hash da oferta/produto
 //   PLUMIFY_WEBHOOK_SECRET  (opcional) segredo do webhook; se ausente, é
 //                           derivado automaticamente do JWT_SECRET
+//
+// Cada vendedor da loja pode usar a PRÓPRIA conta Plumify (ver services/crypto.js
+// e routes/seller.js) — nesse caso as credenciais chegam por parâmetro em vez de
+// virem daqui.
 // ============================================
-const API_TOKEN = process.env.PLUMIFY_API_TOKEN || "";
-const OFFER_HASH = process.env.PLUMIFY_OFFER_HASH || "";
+const PLATFORM_CREDS = {
+  apiToken: process.env.PLUMIFY_API_TOKEN || "",
+  offerHash: process.env.PLUMIFY_OFFER_HASH || "",
+};
+
 const WEBHOOK_SECRET =
   process.env.PLUMIFY_WEBHOOK_SECRET ||
   (process.env.JWT_SECRET
     ? crypto.createHmac("sha256", process.env.JWT_SECRET).update("plumify-webhook").digest("hex")
     : "");
-// A API da Plumify passou a exigir "operation_type". O valor 1 é o que plataformas
-// do mesmo tipo documentam para venda comum — CONFIRME na documentação da Plumify.
+
+// A API da Plumify exige "operation_type". O valor 1 é o que plataformas do mesmo
+// tipo documentam para venda comum — CONFIRME na documentação da Plumify.
 // Se for outro número, defina PLUMIFY_OPERATION_TYPE no Render (sem mexer no código).
 const OPERATION_TYPE = Number(process.env.PLUMIFY_OPERATION_TYPE) || 1;
 
 const API_BASE = "https://api.plumify.com.br/api/public/v1";
 
-const isConfigured = !!API_TOKEN && !!OFFER_HASH;
+function isConfigured(creds) {
+  const c = creds || PLATFORM_CREDS;
+  return !!c.apiToken && !!c.offerHash;
+}
 
 /**
  * Anexa um token próprio (não fornecido pela Plumify) na query string da
@@ -31,6 +42,8 @@ const isConfigured = !!API_TOKEN && !!OFFER_HASH;
  * própria gateway, mas evita que qualquer pessoa que descubra a URL do
  * webhook consiga forjar confirmações de pagamento — só aceitamos o POST
  * se o token bater com o configurado no servidor (ver PLUMIFY_WEBHOOK_SECRET).
+ * Esse segredo é nosso (não da Plumify), então vale para TODOS os vendedores
+ * da loja — não precisa ser um por conta.
  */
 function signedPostbackUrl(postbackUrl) {
   if (!WEBHOOK_SECRET) return postbackUrl;
@@ -64,8 +77,8 @@ function buildCustomer({ customerName, customerEmail, customerPhone, customerCpf
   };
 }
 
-async function callPlumify(payload) {
-  const response = await fetch(`${API_BASE}/transactions?api_token=${API_TOKEN}`, {
+async function callPlumify(creds, payload) {
+  const response = await fetch(`${API_BASE}/transactions?api_token=${creds.apiToken}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -89,8 +102,11 @@ async function callPlumify(payload) {
 
 /**
  * Cria uma transação Pix na Plumify.
+ * `creds` é { apiToken, offerHash } — da plataforma (produto oficial) ou de um
+ * vendedor específico (produto do marketplace). Se omitido, usa a plataforma.
  */
 async function createPixTransaction({
+  creds,
   amountInReais,
   title,
   customerName,
@@ -100,22 +116,23 @@ async function createPixTransaction({
   address,
   postbackUrl,
 }) {
-  if (!isConfigured) throw new Error("PLUMIFY_NOT_CONFIGURED");
+  const c = creds || PLATFORM_CREDS;
+  if (!isConfigured(c)) throw new Error("PLUMIFY_NOT_CONFIGURED");
 
   const amountCents = Math.round(Number(amountInReais) * 100);
 
   const payload = {
     amount: amountCents,
-    offer_hash: OFFER_HASH,
+    offer_hash: c.offerHash,
     operation_type: OPERATION_TYPE,
     payment_method: "pix",
     customer: buildCustomer({ customerName, customerEmail, customerPhone, customerCpf, address }),
-    cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1, operation_type: OPERATION_TYPE }],
+    cart: [{ product_hash: c.offerHash, title, price: amountCents, quantity: 1, operation_type: OPERATION_TYPE }],
     expire_in_days: 1,
     postback_url: signedPostbackUrl(postbackUrl),
   };
 
-  const data = await callPlumify(payload);
+  const data = await callPlumify(c, payload);
 
   if (!data.pix || !data.pix.pix_qr_code) {
     throw new Error(data.message || "Erro ao gerar pagamento Pix.");
@@ -133,6 +150,7 @@ async function createPixTransaction({
  * Cria uma transação de cartão de crédito na Plumify.
  */
 async function createCreditCardTransaction({
+  creds,
   amountInReais,
   title,
   customerName,
@@ -144,7 +162,8 @@ async function createCreditCardTransaction({
   card,
   installments,
 }) {
-  if (!isConfigured) throw new Error("PLUMIFY_NOT_CONFIGURED");
+  const c = creds || PLATFORM_CREDS;
+  if (!isConfigured(c)) throw new Error("PLUMIFY_NOT_CONFIGURED");
   if (!card || !card.number || !card.cvv || !card.expirationMonth || !card.expirationYear || !card.holderName) {
     throw new Error("Dados do cartão incompletos.");
   }
@@ -154,12 +173,12 @@ async function createCreditCardTransaction({
 
   const payload = {
     amount: amountCents,
-    offer_hash: OFFER_HASH,
+    offer_hash: c.offerHash,
     operation_type: OPERATION_TYPE,
     payment_method: "credit_card",
     installments: Math.min(12, Math.max(1, Math.floor(Number(installments)) || 1)),
     customer: buildCustomer({ customerName, customerEmail, customerPhone, customerCpf, address }),
-    cart: [{ product_hash: OFFER_HASH, title, price: amountCents, quantity: 1, operation_type: OPERATION_TYPE }],
+    cart: [{ product_hash: c.offerHash, title, price: amountCents, quantity: 1, operation_type: OPERATION_TYPE }],
     card: {
       number: cleanNumber,
       cvv: String(card.cvv),
@@ -170,7 +189,7 @@ async function createCreditCardTransaction({
     postback_url: signedPostbackUrl(postbackUrl),
   };
 
-  const data = await callPlumify(payload);
+  const data = await callPlumify(c, payload);
 
   const status = (data.payment_status || data.status || "").toLowerCase();
   const approved = ["paid", "approved", "captured"].includes(status);
@@ -189,6 +208,7 @@ async function createCreditCardTransaction({
 }
 
 module.exports = {
+  PLATFORM_CREDS,
   isConfigured,
   createPixTransaction,
   createCreditCardTransaction,

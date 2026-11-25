@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Política de Privacidade — NULLBANKER</title>
+<meta name="description" content="Como o NULLBANKER coleta, usa e protege os dados de clientes e vendedores da loja." />
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/minha-loja.html">Vender</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:64px;padding-bottom:90px;">
+  <div class="wrap" style="max-width:820px;">
+    <div class="eyebrow-num">Documento legal</div>
+    <h2>Política de Privacidade</h2>
+    <p class="helper">Última atualização: <span data-last-updated>[DATA]</span> · Este texto é um modelo técnico-jurídico de referência e não substitui a revisão de um advogado antes da publicação.</p>
+
+    <div class="panel">
+      <h3>1. Quem somos e quais dados coletamos</h3>
+      <p>O NULLBANKER (<strong>[RAZÃO SOCIAL], CNPJ [00.000.000/0000-00]</strong>) é uma plataforma que (a) vende produtos digitais próprios e (b) opera um marketplace onde terceiros ("vendedores") cadastram e vendem os próprios produtos digitais. Coletamos apenas os dados necessários para cada finalidade abaixo:</p>
+      <ul class="feature-list">
+        <li><strong>Conta:</strong> nome, e-mail, telefone (opcional) e senha (armazenada com hash criptográfico, nunca em texto puro).</li>
+        <li><strong>Compra:</strong> nome, e-mail, telefone, CPF e endereço informados no checkout — repassados à gateway de pagamento (Plumify) para processar Pix/cartão. O NULLBANKER não armazena número completo de cartão nem CVV.</li>
+        <li><strong>Vendedor:</strong> nome da loja, descrição, e as credenciais de API da própria gateway de pagamento do vendedor, guardadas criptografadas e usadas só para processar as vendas daquele vendedor.</li>
+        <li><strong>Navegação:</strong> endereço IP e página acessada, para estatística interna de uso e segurança (nunca vendido ou usado para publicidade de terceiros).</li>
+      </ul>
+
+      <h3>2. Para que usamos os dados</h3>
+      <p>Processar pedidos e pagamentos; autenticar o acesso à conta; entregar o arquivo comprado; prevenir fraude e abuso; cumprir obrigação legal ou fiscal; e, com produtos do marketplace, repassar ao vendedor os dados mínimos (nome, e-mail, telefone) necessários para ele atender a venda.</p>
+
+      <h3>3. Com quem compartilhamos</h3>
+      <p>Gateway de pagamento (Plumify) para processar Pix e cartão; o vendedor do produto comprado, quando aplicável; e autoridades, mediante obrigação legal. Não vendemos dados pessoais a terceiros para fins de marketing.</p>
+
+      <h3>4. Seus direitos (LGPD, Lei 13.709/2018)</h3>
+      <p>Você pode confirmar a existência de tratamento, acessar, corrigir, solicitar a eliminação ou a portabilidade dos seus dados, e revogar o consentimento dado, pelos canais listados em <a href="/suporte.html" style="color:var(--gold-l);text-decoration:underline;">Suporte</a>. Alguns dados (ex.: histórico de pedidos) podem ser mantidos pelo prazo exigido pela legislação fiscal e de defesa do consumidor mesmo após a exclusão da conta.</p>
+
+      <h3>5. Segurança</h3>
+      <p>Senhas com hash bcrypt; credenciais de pagamento de vendedores criptografadas em repouso (AES-256); conexão HTTPS; controle de acesso por sessão com expiração. Nenhum sistema é 100% imune a incidentes — em caso de vazamento, avisaremos os afetados e a ANPD conforme exigido em lei.</p>
+
+      <h3>6. Cookies</h3>
+      <p>Veja a <a href="/politica-cookies.html" style="color:var(--gold-l);text-decoration:underline;">Política de Cookies</a> em separado.</p>
+
+      <h3>7. Contato do Encarregado (DPO)</h3>
+      <p>[NOME DO ENCARREGADO] — [e-mail do encarregado] — [endereço físico da empresa]</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-legal">
+      <span>[RAZÃO SOCIAL LTDA] · CNPJ [00.000.000/0000-00] · [Endereço completo, Cidade/UF] · <a href="mailto:[contato@seudominio.com]">[contato@seudominio.com]</a></span>
+      <span class="footer-legal-links">
+        <a href="/politica-privacidade.html">Privacidade</a>
+        <a href="/termos-de-uso.html">Termos de Uso</a>
+        <a href="/politica-cookies.html">Cookies</a>
+        <a href="/politica-reembolso.html">Reembolso</a>
+        <a href="#" data-manage-cookies>Gerenciar cookies</a>
+      </span>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 NULLBANKER.</span>
+      <span>desenvolvido por nuitbanker</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

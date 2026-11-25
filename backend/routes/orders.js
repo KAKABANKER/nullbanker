@@ -2,11 +2,14 @@ const express = require("express");
 const { prisma } = require("../db");
 const { requireAuth } = require("../middleware/auth");
 const plumify = require("../services/plumify");
+const { decrypt } = require("../services/crypto");
 
 const router = express.Router();
 
 // Os SDKs só são inicializados se a chave existir, para o site não quebrar
 // enquanto as contas de gateway ainda não foram configuradas pelo dono do site.
+// Stripe e Mercado Pago só servem para os produtos OFICIAIS (sem vendedor) —
+// produtos do marketplace são sempre pela Plumify do próprio vendedor.
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -20,6 +23,20 @@ if (process.env.MP_ACCESS_TOKEN) {
 }
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
+
+// Credenciais Plumify a usar para ESTE produto: do vendedor (marketplace) ou
+// da plataforma (produto oficial). Retorna null se não há Plumify configurada
+// para esse caso (aí o chamador decide se cai pra Stripe/Mercado Pago ou erro).
+function creditsFor(product) {
+  if (product.sellerId) {
+    if (!product.seller || !product.seller.plumifyConfigured) return null;
+    const apiToken = decrypt(product.seller.plumifyApiToken);
+    const offerHash = decrypt(product.seller.plumifyOfferHash);
+    if (!apiToken || !offerHash) return null;
+    return { apiToken, offerHash };
+  }
+  return plumify.isConfigured(plumify.PLATFORM_CREDS) ? plumify.PLATFORM_CREDS : null;
+}
 
 // POST /api/orders -> cria um pedido e inicia o pagamento
 router.post("/", requireAuth, async (req, res) => {
@@ -43,8 +60,11 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Forma de pagamento inválida." });
     }
 
-    const product = await prisma.product.findUnique({ where: { id: Number(productId) } });
-    if (!product || !product.active) {
+    const product = await prisma.product.findUnique({
+      where: { id: Number(productId) },
+      include: { seller: { select: { id: true, plumifyApiToken: true, plumifyOfferHash: true, plumifyConfigured: true } } },
+    });
+    if (!product || !product.active || product.status !== "approved") {
       return res.status(404).json({ error: "Produto não encontrado." });
     }
 
@@ -56,19 +76,26 @@ router.post("/", requireAuth, async (req, res) => {
     }
 
     // ---------- Decide o gateway ANTES de criar o pedido ----------
-    const usePlumify = plumify.isConfigured;
+    const isMarketplace = !!product.sellerId;
+    const creds = creditsFor(product);
+    const usePlumify = !!creds;
 
-    if (paymentMethod === "credit_card" && !usePlumify && !stripe) {
+    if (isMarketplace && !usePlumify) {
       return res.status(503).json({
-        error:
-          "Pagamento por cartão ainda não configurado. Defina PLUMIFY_API_TOKEN (ou STRIPE_SECRET_KEY) no servidor.",
+        error: "O vendedor deste produto ainda não configurou o recebimento. Tente novamente mais tarde.",
       });
     }
-    if (paymentMethod === "pix" && !usePlumify && !mpPayment) {
-      return res.status(503).json({
-        error:
-          "Pagamento via Pix ainda não configurado. Defina PLUMIFY_API_TOKEN (ou MP_ACCESS_TOKEN) no servidor.",
-      });
+    if (!isMarketplace) {
+      if (paymentMethod === "credit_card" && !usePlumify && !stripe) {
+        return res.status(503).json({
+          error: "Pagamento por cartão ainda não configurado. Defina PLUMIFY_API_TOKEN (ou STRIPE_SECRET_KEY) no servidor.",
+        });
+      }
+      if (paymentMethod === "pix" && !usePlumify && !mpPayment) {
+        return res.status(503).json({
+          error: "Pagamento via Pix ainda não configurado. Defina PLUMIFY_API_TOKEN (ou MP_ACCESS_TOKEN) no servidor.",
+        });
+      }
     }
 
     // ---------- Validações específicas (antes de criar o pedido) ----------
@@ -85,38 +112,27 @@ router.post("/", requireAuth, async (req, res) => {
       // Pix exige endereço completo; cartão não pede endereço (decisão do produto).
       if (paymentMethod === "pix" && !hasFullAddress) {
         return res.status(400).json({
-          error:
-            "Preencha o endereço completo (rua, número, bairro, cidade, estado e CEP) para gerar o Pix.",
+          error: "Preencha o endereço completo (rua, número, bairro, cidade, estado e CEP) para gerar o Pix.",
         });
       }
       if (!cpf) {
         return res.status(400).json({ error: "Informe o CPF para continuar." });
       }
       if (paymentMethod === "credit_card") {
-        if (
-          !card ||
-          !card.number ||
-          !card.cvv ||
-          !card.expirationMonth ||
-          !card.expirationYear ||
-          !card.holderName
-        ) {
+        if (!card || !card.number || !card.cvv || !card.expirationMonth || !card.expirationYear || !card.holderName) {
           return res.status(400).json({ error: "Preencha todos os dados do cartão." });
         }
       }
     }
 
     // ---------- Cria o pedido (já com validações feitas) ----------
-    const gatewayName = usePlumify
-      ? "plumify"
-      : paymentMethod === "credit_card"
-      ? "stripe"
-      : "mercadopago";
+    const gatewayName = usePlumify ? "plumify" : paymentMethod === "credit_card" ? "stripe" : "mercadopago";
 
     const order = await prisma.order.create({
       data: {
         userId: req.user.id,
         productId: product.id,
+        sellerId: product.sellerId || null,
         customerName,
         customerEmail,
         paymentMethod,
@@ -131,6 +147,7 @@ router.post("/", requireAuth, async (req, res) => {
       if (usePlumify) {
         try {
           const result = await plumify.createCreditCardTransaction({
+            creds,
             amountInReais: product.price,
             title: product.name,
             customerName,
@@ -158,16 +175,14 @@ router.post("/", requireAuth, async (req, res) => {
           return res.status(201).json({ order: updated });
         } catch (cardErr) {
           console.error("Erro ao cobrar cartão via Plumify:", cardErr);
-          await prisma.order
-            .update({ where: { id: order.id }, data: { status: "failed" } })
-            .catch(() => {});
+          await prisma.order.update({ where: { id: order.id }, data: { status: "failed" } }).catch(() => {});
           return res.status(402).json({
             error: cardErr.message || "Não foi possível processar o pagamento com este cartão.",
           });
         }
       }
 
-      // Stripe (fallback)
+      // Stripe (fallback — só para produto oficial)
       try {
         const session = await stripe.checkout.sessions.create({
           mode: "payment",
@@ -196,9 +211,7 @@ router.post("/", requireAuth, async (req, res) => {
         return res.status(201).json({ order: updated, checkoutUrl: session.url });
       } catch (stripeErr) {
         console.error("Erro ao criar sessão Stripe:", stripeErr);
-        await prisma.order
-          .update({ where: { id: order.id }, data: { status: "failed" } })
-          .catch(() => {});
+        await prisma.order.update({ where: { id: order.id }, data: { status: "failed" } }).catch(() => {});
         return res.status(502).json({ error: "Não foi possível iniciar o checkout." });
       }
     }
@@ -207,6 +220,7 @@ router.post("/", requireAuth, async (req, res) => {
     if (usePlumify) {
       try {
         const result = await plumify.createPixTransaction({
+          creds,
           amountInReais: product.price,
           title: product.name,
           customerName,
@@ -224,23 +238,16 @@ router.post("/", requireAuth, async (req, res) => {
 
         return res.status(201).json({
           order: updated,
-          pix: {
-            qrCode: result.pixCode,
-            qrCodeBase64: result.pixQrCodeBase64,
-          },
+          pix: { qrCode: result.pixCode, qrCodeBase64: result.pixQrCodeBase64 },
         });
       } catch (plumifyErr) {
         console.error("Erro ao gerar Pix via Plumify:", plumifyErr);
-        await prisma.order
-          .update({ where: { id: order.id }, data: { status: "failed" } })
-          .catch(() => {});
-        return res.status(502).json({
-          error: "Não foi possível gerar o Pix agora. Tente novamente em instantes.",
-        });
+        await prisma.order.update({ where: { id: order.id }, data: { status: "failed" } }).catch(() => {});
+        return res.status(502).json({ error: "Não foi possível gerar o Pix agora. Tente novamente em instantes." });
       }
     }
 
-    // Mercado Pago (fallback)
+    // Mercado Pago (fallback — só para produto oficial)
     try {
       const [firstName, ...rest] = customerName.split(" ");
       const payment = await mpPayment.create({
@@ -252,9 +259,7 @@ router.post("/", requireAuth, async (req, res) => {
             email: customerEmail,
             first_name: firstName || customerName,
             last_name: rest.join(" ") || "Cliente",
-            identification: cpf
-              ? { type: "CPF", number: String(cpf).replace(/\D/g, "") }
-              : undefined,
+            identification: cpf ? { type: "CPF", number: String(cpf).replace(/\D/g, "") } : undefined,
           },
           notification_url: `${APP_URL}/api/webhooks/mercadopago`,
           metadata: { orderId: String(order.id) },
@@ -278,12 +283,8 @@ router.post("/", requireAuth, async (req, res) => {
       });
     } catch (mpErr) {
       console.error("Erro ao gerar Pix via Mercado Pago:", mpErr);
-      await prisma.order
-        .update({ where: { id: order.id }, data: { status: "failed" } })
-        .catch(() => {});
-      return res.status(502).json({
-        error: "Não foi possível gerar o Pix agora. Tente novamente em instantes.",
-      });
+      await prisma.order.update({ where: { id: order.id }, data: { status: "failed" } }).catch(() => {});
+      return res.status(502).json({ error: "Não foi possível gerar o Pix agora. Tente novamente em instantes." });
     }
   } catch (err) {
     console.error("Erro ao criar pedido:", err);

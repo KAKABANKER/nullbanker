@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Minha Loja — NULLBANKER</title>
+<link rel="icon" href="/img/logo.png" data-fallback="/img/logo.svg" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a href="/" class="logo"><img src="/img/logo.png" alt="NullBanker" data-fallback="/img/logo.svg" /><span class="logo-text">NULLBANKER</span></a>
+    <nav class="mainnav">
+      <a href="/">Início</a>
+      <a href="/produtos.html">Produtos</a>
+      <a href="/minha-loja.html" class="active">Vender</a>
+      <a href="/suporte.html">Suporte</a>
+    </nav>
+    <div class="topbar-actions" data-auth-slot></div>
+    <button class="navtoggle">menu</button>
+  </div>
+</header>
+
+<section style="padding-top:64px;padding-bottom:90px;">
+  <div class="wrap">
+    <div class="eyebrow-num">Marketplace</div>
+    <h2>Minha Loja</h2>
+    <p class="lede">Coloque seus próprios sites e sistemas à venda no NULLBANKER. O pagamento cai direto na sua conta Plumify — a casa não fica com nenhuma parte da sua venda.</p>
+
+    <div class="tabs" id="storeTabs" style="margin-top:40px;">
+      <button type="button" data-tab="products" class="active">Meus Produtos</button>
+      <button type="button" data-tab="sales">Minhas Vendas</button>
+      <button type="button" data-tab="finance">Financeiro</button>
+    </div>
+
+    <!-- PRODUTOS -->
+    <div class="tab-panel" id="tab-products">
+      <div class="admin-toolbar"><button type="button" class="btn btn-primary" id="newProduct">+ Novo produto</button></div>
+
+      <div class="panel" id="productPanel" style="display:none;">
+        <h3 id="productPanelTitle">Novo produto</h3>
+        <p class="sub">Antes de aparecer na loja, todo produto novo passa por uma revisão rápida do admin.</p>
+        <input type="hidden" id="pId" />
+        <div class="form-grid">
+          <div class="field"><label for="pName">Nome</label><input type="text" id="pName" maxlength="120" /></div>
+          <div class="field"><label for="pShort">Descrição curta</label><input type="text" id="pShort" maxlength="200" /></div>
+          <div class="field full"><label for="pDesc">Descrição completa</label><textarea id="pDesc" rows="4"></textarea></div>
+          <div class="field">
+            <label for="pPrice">Preço (R$)</label>
+            <input type="text" id="pPrice" inputmode="decimal" placeholder="Ex: 297,00" />
+            <label class="check-row"><input type="checkbox" id="pFree" /> Produto grátis (exige login para baixar)</label>
+          </div>
+          <div class="field">
+            <label for="pDownload">Link do arquivo para download</label>
+            <input type="text" id="pDownload" placeholder="https://... (Drive, Dropbox, Mega, R2...)" />
+            <p class="helper" style="margin:8px 0 0;">Nunca aparece no site. Só é entregue depois de confirmar a compra.</p>
+          </div>
+          <div class="field full">
+            <label for="pImage">Imagem de capa (link)</label>
+            <input type="text" id="pImage" placeholder="https://..." />
+            <div class="image-preview-box" id="imagePreview"></div>
+          </div>
+          <div class="field full">
+            <label>Galeria de fotos (slide na página do produto)</label>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <div class="admin-toolbar" style="margin:10px 0 0;">
+              <input type="text" id="pGalleryInput" placeholder="https://... (cole o link e clique em Adicionar)" />
+              <button type="button" class="btn btn-outline" id="addGallery">Adicionar</button>
+            </div>
+          </div>
+          <div class="field full"><label for="pFeatures">Características (uma por linha)</label><textarea id="pFeatures" rows="4"></textarea></div>
+        </div>
+        <div class="admin-toolbar" style="margin-bottom:0;">
+          <button type="button" class="btn btn-primary" id="saveProduct">Salvar produto</button>
+          <button type="button" class="btn btn-outline" id="cancelProduct">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="productsTable"><div class="empty-state"><span class="spinner-line">carregando...</span></div></div>
+    </div>
+
+    <!-- VENDAS -->
+    <div class="tab-panel" id="tab-sales" style="display:none;">
+      <div class="stat-grid" id="salesStats" style="margin-bottom:32px;"></div>
+      <div class="table-wrap" id="salesTable"><div class="empty-state"><span class="spinner-line">carregando...</span></div></div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="tab-panel" id="tab-finance" style="display:none;">
+      <div class="panel" style="max-width:720px;">
+        <h3>Dados da loja</h3>
+        <p class="sub">Nome e descrição exibidos para quem visita seus produtos.</p>
+        <div class="form-grid">
+          <div class="field"><label for="storeName">Nome da loja</label><input type="text" id="storeName" maxlength="60" placeholder="Ex: Estúdio Aurora" /></div>
+          <div class="field full"><label for="storeBio">Sobre a loja (opcional)</label><textarea id="storeBio" rows="3" maxlength="300"></textarea></div>
+        </div>
+      </div>
+
+      <div class="panel" style="max-width:720px;">
+        <h3>Recebimento via Plumify</h3>
+        <p class="sub">Suas credenciais da Plumify ficam criptografadas no banco. O NULLBANKER nunca vê nem guarda o dinheiro das suas vendas — ele cai direto na sua conta.</p>
+        <div id="financeStatus"></div>
+        <div class="form-grid" style="margin-top:18px;">
+          <div class="field"><label for="plumifyApiToken">Token da API (Plumify)</label><input type="password" id="plumifyApiToken" autocomplete="off" placeholder="Cole aqui o token do seu painel Plumify" /></div>
+          <div class="field"><label for="plumifyOfferHash">Hash da oferta (Plumify)</label><input type="text" id="plumifyOfferHash" autocomplete="off" placeholder="Hash da oferta cadastrada na Plumify" /></div>
+        </div>
+        <p class="helper" style="margin:0 0 18px;">Pegue os dois no painel da sua conta Plumify, em Oferta/Integração.</p>
+        <div class="admin-toolbar" style="margin-bottom:0;">
+          <button type="button" class="btn btn-primary" id="saveFinance">Salvar credenciais</button>
+          <button type="button" class="btn btn-danger" id="clearFinance" style="display:none;">Remover credenciais</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box confirm-box">
+    <h3 id="confirmTitle">Confirmar</h3>
+    <p id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-outline" id="confirmNo">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="confirmYes">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-legal">
+      <span>[RAZÃO SOCIAL LTDA] · CNPJ [00.000.000/0000-00] · [Endereço completo, Cidade/UF] · <a href="mailto:[contato@seudominio.com]">[contato@seudominio.com]</a></span>
+      <span class="footer-legal-links">
+        <a href="/politica-privacidade.html">Privacidade</a>
+        <a href="/termos-de-uso.html">Termos de Uso</a>
+        <a href="/politica-cookies.html">Cookies</a>
+        <a href="/politica-reembolso.html">Reembolso</a>
+        <a href="#" data-manage-cookies>Gerenciar cookies</a>
+      </span>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 NULLBANKER.</span>
+      <span>desenvolvido por nuitbanker</span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/main.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STATUS_LABEL = { paid: "Pago", pending: "Pendente", failed: "Falhou", cancelled: "Cancelado", refunded: "Reembolsado" };
+  const PRODUCT_STATUS_LABEL = { pending: "Em revisão", approved: "Aprovado", rejected: "Recusado" };
+  const emptyRow = (text) => `<div class="empty-state">${esc(text)}</div>`;
+
+  function ask({ title, message, confirmText = "Confirmar" }) {
+    return new Promise((resolve) => {
+      $("confirmTitle").textContent = title;
+      $("confirmMessage").textContent = message;
+      $("confirmYes").textContent = confirmText;
+      $("confirmModal").classList.add("open");
+      const done = (v) => { $("confirmModal").classList.remove("open"); $("confirmYes").onclick = null; $("confirmNo").onclick = null; resolve(v); };
+      $("confirmYes").onclick = () => done(true);
+      $("confirmNo").onclick = () => done(false);
+    });
+  }
+
+  /* ---------- abas ---------- */
+  const loaders = {};
+  document.querySelectorAll("#storeTabs button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#storeTabs button").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach((p) => (p.style.display = p.id === `tab-${b.dataset.tab}` ? "block" : "none"));
+    if (loaders[b.dataset.tab]) loaders[b.dataset.tab]();
+  }));
+
+  /* ---------- PRODUTOS ---------- */
+  let gallery = [];
+  let productsCache = [];
+  function parseBRL(v) {
+    let t = String(v).trim().replace(/[R$\s]/g, "");
+    if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+    const n = Number(t);
+    return Number.isFinite(n) ? n : NaN;
+  }
+  function renderGallery() {
+    const grid = $("galleryGrid");
+    grid.innerHTML = gallery.map((url, i) => `<div class="gallery-thumb"><img src="${esc(url)}" alt="Foto ${i + 1}" /><button type="button" class="gallery-remove" data-i="${i}" aria-label="Remover foto">×</button></div>`).join("");
+    grid.querySelectorAll("img").forEach((img) => img.addEventListener("error", () => img.closest(".gallery-thumb").classList.add("broken")));
+    grid.querySelectorAll(".gallery-remove").forEach((b) => b.addEventListener("click", () => { gallery.splice(Number(b.dataset.i), 1); renderGallery(); }));
+  }
+  function updateImagePreview() {
+    const url = $("pImage").value.trim();
+    const box = $("imagePreview");
+    box.innerHTML = "";
+    if (!url) return;
+    const img = document.createElement("img");
+    img.alt = "Prévia";
+    img.addEventListener("error", () => img.remove());
+    img.src = url;
+    box.appendChild(img);
+  }
+  function syncFree() {
+    const free = $("pFree").checked;
+    $("pPrice").disabled = free;
+    if (free) $("pPrice").value = "0";
+  }
+  function openProductPanel(p) {
+    $("productPanel").style.display = "block";
+    $("productPanelTitle").textContent = p ? "Editar produto" : "Novo produto";
+    $("pId").value = p ? p.id : "";
+    $("pName").value = p ? p.name : "";
+    $("pShort").value = p ? p.shortDesc : "";
+    $("pDesc").value = p ? p.description : "";
+    $("pFree").checked = p ? Number(p.price) <= 0 : false;
+    $("pPrice").value = p ? String(p.price).replace(".", ",") : "";
+    $("pDownload").value = p ? p.downloadUrl || "" : "";
+    $("pImage").value = p ? p.imageUrl || "" : "";
+    $("pFeatures").value = p ? (p.features || []).join("\n") : "";
+    gallery = p ? [...(p.images || [])] : [];
+    syncFree(); renderGallery(); updateImagePreview();
+    $("productPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("pFree").addEventListener("change", () => { syncFree(); if (!$("pFree").checked) $("pPrice").value = ""; });
+  $("pImage").addEventListener("input", updateImagePreview);
+  $("addGallery").addEventListener("click", () => {
+    const v = $("pGalleryInput").value.trim();
+    if (!v) return;
+    if (gallery.length >= 12) return toast("Máximo de 12 fotos na galeria.", "error");
+    gallery.push(v); $("pGalleryInput").value = ""; renderGallery();
+  });
+  $("pGalleryInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("addGallery").click(); } });
+  $("newProduct").addEventListener("click", () => openProductPanel(null));
+  $("cancelProduct").addEventListener("click", () => ($("productPanel").style.display = "none"));
+
+  $("saveProduct").addEventListener("click", async () => {
+    const free = $("pFree").checked;
+    const price = free ? 0 : parseBRL($("pPrice").value);
+    const payload = {
+      name: $("pName").value.trim(), shortDesc: $("pShort").value.trim(), description: $("pDesc").value.trim(),
+      price, imageUrl: $("pImage").value.trim(), downloadUrl: $("pDownload").value.trim(), images: gallery,
+      features: $("pFeatures").value.split("\n").map((f) => f.trim()).filter(Boolean),
+    };
+    if (!payload.name || !payload.shortDesc || !payload.description) return toast("Preencha nome, descrição curta e descrição completa.", "error");
+    if (!free && (!Number.isFinite(price) || price <= 0)) return toast("Informe um preço maior que zero ou marque o produto como grátis.", "error");
+    const id = $("pId").value;
+    const btn = $("saveProduct");
+    btn.disabled = true;
+    try {
+      if (id) await API.put(`/my/products/${id}`, payload);
+      else await API.post("/my/products", payload);
+      toast(id ? "Produto atualizado." : "Produto enviado para revisão.", "success");
+      $("productPanel").style.display = "none";
+      loaders.products();
+    } catch (e) { toast(e.message || "Não foi possível salvar o produto.", "error"); }
+    btn.disabled = false;
+  });
+
+  loaders.products = async () => {
+    const wrap = $("productsTable");
+    try {
+      const { products } = await API.get("/my/products");
+      productsCache = products;
+      wrap.innerHTML = products.length ? `<table class="admin-table"><thead><tr><th>Imagem</th><th>Nome</th><th>Preço</th><th>Status</th><th>Vendas</th><th>Na loja</th><th></th></tr></thead><tbody>${products.map((p) => `
+        <tr>
+          <td>${p.imageUrl ? `<img class="thumb-sm" src="${esc(p.imageUrl)}" alt="" />` : `<span class="helper" style="margin:0;">—</span>`}</td>
+          <td>${esc(p.name)}</td>
+          <td>${Number(p.price) <= 0 ? '<span class="badge free">Grátis</span>' : formatBRL(p.price)}</td>
+          <td><span class="badge ${p.status === "approved" ? "paid" : p.status === "rejected" ? "banned" : "pending"}">${esc(PRODUCT_STATUS_LABEL[p.status] || p.status)}</span>${p.status === "rejected" && p.rejectionReason ? `<div class="helper" style="margin:6px 0 0;">${esc(p.rejectionReason)}</div>` : ""}</td>
+          <td>${p._count ? p._count.orders : 0}</td>
+          <td>${p.active ? '<span class="badge paid">Visível</span>' : '<span class="badge failed">Oculto</span>'}</td>
+          <td><div class="row-actions">
+            <button type="button" class="btn btn-outline btn-sm" data-act="edit" data-id="${p.id}">Editar</button>
+            <button type="button" class="btn btn-outline btn-sm" data-act="toggle" data-id="${p.id}">${p.active ? "Ocultar" : "Mostrar"}</button>
+            <button type="button" class="btn btn-danger btn-sm" data-act="delete" data-id="${p.id}">Excluir</button>
+          </div></td>
+        </tr>`).join("")}</tbody></table>` : emptyRow("Você ainda não cadastrou nenhum produto.");
+
+      wrap.querySelectorAll(".thumb-sm").forEach((img) => img.addEventListener("error", () => img.remove()));
+      wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
+        const p = productsCache.find((x) => x.id === Number(b.dataset.id));
+        if (!p) return;
+        if (b.dataset.act === "edit") return openProductPanel(p);
+        if (b.dataset.act === "toggle") {
+          try { await API.put(`/my/products/${p.id}`, { active: !p.active }); toast(p.active ? "Produto ocultado." : "Produto visível na loja.", "success"); loaders.products(); }
+          catch (e) { toast(e.message || "Não foi possível alterar.", "error"); }
+          return;
+        }
+        if (!(await ask({ title: "Excluir produto", message: `Excluir "${p.name}"? Se já houver vendas, ele só será ocultado da loja (seu histórico é mantido).`, confirmText: "Excluir" }))) return;
+        try {
+          const r = await API.del(`/my/products/${p.id}`);
+          toast(r.deactivated ? `Esse produto já teve ${r.orders} venda(s): foi ocultado em vez de apagado.` : "Produto excluído.", "success");
+          loaders.products();
+        } catch (e) { toast(e.message || "Não foi possível excluir.", "error"); }
+      }));
+    } catch (e) { wrap.innerHTML = emptyRow("Não foi possível carregar seus produtos."); }
+  };
+
+  /* ---------- VENDAS ---------- */
+  loaders.sales = async () => {
+    try {
+      const { orders, revenue } = await API.get("/my/sales");
+      const paid = orders.filter((o) => o.status === "paid").length;
+      $("salesStats").innerHTML = [
+        ["Faturado (pago)", formatBRL(revenue)],
+        ["Vendas pagas", `${paid}/${orders.length}`],
+      ].map(([l, v]) => `<div class="stat-cell"><div class="label">${l}</div><div class="value">${esc(v)}</div></div>`).join("");
+
+      $("salesTable").innerHTML = orders.length
+        ? `<table class="admin-table"><thead><tr><th>Produto</th><th>Cliente</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Data</th></tr></thead><tbody>${orders.map((o) => `
+          <tr>
+            <td>${o.product ? esc(o.product.name) : "—"}</td>
+            <td>${esc(o.customerName)}<br /><span class="helper" style="margin:0;">${esc(o.customerEmail)}</span></td>
+            <td>${formatBRL(o.amount)}</td>
+            <td>${o.paymentMethod === "pix" ? "Pix" : "Cartão"}${o.cardLast4 ? ` ••${esc(o.cardLast4)}` : ""}</td>
+            <td><span class="badge ${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
+            <td>${formatDate(o.createdAt)}</td>
+          </tr>`).join("")}</tbody></table>`
+        : emptyRow("Nenhuma venda ainda.");
+    } catch (e) { $("salesTable").innerHTML = emptyRow("Não foi possível carregar suas vendas."); }
+  };
+
+  /* ---------- FINANCEIRO ---------- */
+  loaders.finance = async () => {
+    try {
+      const data = await API.get("/my/finance");
+      $("storeName").value = data.storeName || "";
+      $("storeBio").value = data.storeBio || "";
+      $("clearFinance").style.display = data.plumifyConfigured ? "inline-flex" : "none";
+      $("financeStatus").innerHTML = data.plumifyConfigured
+        ? `<div class="history-row"><strong><span class="status-dot ok"></span>Plumify conectada</strong><span>Suas vendas estão liberadas para pagamento.</span></div>`
+        : `<div class="history-row"><strong><span class="status-dot"></span>Plumify não configurada</strong><span>Cadastre suas credenciais abaixo para começar a vender produtos pagos.</span></div>`;
+      if (!data.cryptoReady) {
+        $("financeStatus").innerHTML += emptyRow("O servidor ainda não está pronto para guardar credenciais de pagamento. Fale com o suporte.");
+        $("saveFinance").disabled = true;
+      }
+    } catch (e) { toast("Não foi possível carregar seus dados financeiros.", "error"); }
+  };
+
+  $("saveFinance").addEventListener("click", async () => {
+    const token = $("plumifyApiToken").value.trim();
+    const hash = $("plumifyOfferHash").value.trim();
+    const payload = { storeName: $("storeName").value, storeBio: $("storeBio").value };
+    if (token || hash) {
+      if (!token || !hash) return toast("Preencha o token E o hash da Plumify juntos.", "error");
+      payload.plumifyApiToken = token;
+      payload.plumifyOfferHash = hash;
+    }
+    try {
+      await API.put("/my/finance", payload);
+      $("plumifyApiToken").value = ""; $("plumifyOfferHash").value = "";
+      toast("Dados salvos.", "success");
+      loaders.finance();
+    } catch (e) { toast(e.message || "Não foi possível salvar.", "error"); }
+  });
+  $("clearFinance").addEventListener("click", async () => {
+    if (!(await ask({ title: "Remover credenciais", message: "Suas vendas pagas param de funcionar até você cadastrar uma nova Plumify. Continuar?", confirmText: "Remover" }))) return;
+    try { await API.del("/my/finance"); toast("Credenciais removidas.", "success"); loaders.finance(); }
+    catch (e) { toast(e.message || "Não foi possível remover.", "error"); }
+  });
+
+  if (!API.token()) {
+    window.location.href = "/login.html?next=" + encodeURIComponent("/minha-loja.html");
+  } else {
+    loaders.products();
+  }
+})();
+</script>
+</body>
+</html>

@@ -376,3 +376,49 @@ document.addEventListener("DOMContentLoaded", () => {
   initScrollAnimations();
   maybeShowEntryModal();
 });
+
+/* =====================================================================
+   LGPD — banner de consentimento de cookies
+   ===================================================================== */
+
+function initCookieConsent() {
+  const KEY = "nb_cookie_consent"; // "accepted" | "declined"
+  const saved = localStorage.getItem(KEY);
+
+  function buildBanner() {
+    if (document.getElementById("cookieBanner")) return;
+    const bar = document.createElement("div");
+    bar.id = "cookieBanner";
+    bar.className = "cookie-banner";
+    bar.innerHTML = `
+      <div class="wrap cookie-banner-inner">
+        <p>Usamos cookies essenciais para você continuar logado e navegar com segurança. Não usamos cookies de publicidade. <a href="/politica-cookies.html">Saiba mais</a>.</p>
+        <div class="cookie-banner-actions">
+          <button type="button" class="btn btn-outline btn-sm" id="cookieDecline">Recusar não essenciais</button>
+          <button type="button" class="btn btn-primary btn-sm" id="cookieAccept">Aceitar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(bar);
+    document.getElementById("cookieAccept").addEventListener("click", () => {
+      localStorage.setItem(KEY, "accepted");
+      bar.remove();
+    });
+    document.getElementById("cookieDecline").addEventListener("click", () => {
+      localStorage.setItem(KEY, "declined");
+      bar.remove();
+    });
+  }
+
+  if (!saved) buildBanner();
+
+  // Link "Gerenciar cookies" no rodapé reabre o banner a qualquer momento.
+  document.querySelectorAll("[data-manage-cookies]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("cookieBanner")?.remove();
+      buildBanner();
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initCookieConsent);

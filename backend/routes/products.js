@@ -37,9 +37,17 @@ function slugify(text) {
 }
 
 // Nunca expõe o link do arquivo nas rotas públicas: só diz se existe e se é grátis.
+// Também nunca expõe status/rejectionReason (informação interna de moderação) nem
+// nada do vendedor além do nome público da loja.
 function toPublic(product) {
-  const { downloadUrl, ...rest } = product;
-  return { ...rest, hasDownload: !!downloadUrl, isFree: Number(product.price) <= 0 };
+  const { downloadUrl, status, rejectionReason, reviewedAt, seller, ...rest } = product;
+  return {
+    ...rest,
+    hasDownload: !!downloadUrl,
+    isFree: Number(product.price) <= 0,
+    isOfficial: !product.sellerId,
+    sellerStoreName: seller ? seller.storeName || seller.name : null,
+  };
 }
 
 // Aceita só links http(s) (ou caminho local começando com "/"); vazio vira null.
@@ -60,21 +68,31 @@ function cleanPrice(value) {
 // GET /api/products?q=busca -> lista pública (com busca opcional)
 router.get("/", async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, scope } = req.query;
     const where = {
       active: true,
+      // Produto oficial (sellerId nulo) não passa por moderação; produto de
+      // vendedor só aparece na loja depois de aprovado pelo admin.
+      OR: [{ sellerId: null }, { status: "approved" }],
+      ...(scope === "official" ? { sellerId: null } : {}),
+      ...(scope === "marketplace" ? { sellerId: { not: null } } : {}),
       ...(q
         ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { shortDesc: { contains: q, mode: "insensitive" } },
-              { description: { contains: q, mode: "insensitive" } },
+            AND: [
+              {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { shortDesc: { contains: q, mode: "insensitive" } },
+                  { description: { contains: q, mode: "insensitive" } },
+                ],
+              },
             ],
           }
         : {}),
     };
     const products = await prisma.product.findMany({
       where,
+      include: { seller: { select: { name: true, storeName: true } } },
       orderBy: { createdAt: "desc" },
     });
     res.json({ products: products.map(toPublic) });
@@ -89,8 +107,9 @@ router.get("/:slug", async (req, res) => {
   try {
     const product = await prisma.product.findUnique({
       where: { slug: req.params.slug },
+      include: { seller: { select: { name: true, storeName: true, storeBio: true } } },
     });
-    if (!product || !product.active) {
+    if (!product || !product.active || (product.sellerId && product.status !== "approved")) {
       return res.status(404).json({ error: "Produto não encontrado." });
     }
     res.json({ product: toPublic(product) });

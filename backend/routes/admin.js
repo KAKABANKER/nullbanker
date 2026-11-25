@@ -33,17 +33,35 @@ async function logAction(req, action, { targetType, targetId, detail } = {}) {
 // GET /api/admin/stats -> números gerais para o topo do dashboard
 router.get("/stats", async (req, res) => {
   try {
-    const [totalVisits, totalOrders, paidOrders, revenueAgg, totalProducts, totalUsers, pendingOrders, totalDownloads] =
-      await Promise.all([
-        prisma.visit.count(),
-        prisma.order.count(),
-        prisma.order.count({ where: { status: "paid" } }),
-        prisma.order.aggregate({ where: { status: "paid" }, _sum: { amount: true } }),
-        prisma.product.count(),
-        prisma.user.count(),
-        prisma.order.count({ where: { status: "pending" } }),
-        prisma.download.count(),
-      ]);
+    const [
+      totalVisits,
+      totalOrders,
+      paidOrders,
+      officialRevenueAgg,
+      marketplaceRevenueAgg,
+      totalProducts,
+      totalUsers,
+      pendingOrders,
+      totalDownloads,
+      pendingProducts,
+      totalSellers,
+    ] = await Promise.all([
+      prisma.visit.count(),
+      prisma.order.count(),
+      prisma.order.count({ where: { status: "paid" } }),
+      // Receita da CASA: só produtos oficiais (sellerId nulo) — esse é o único
+      // dinheiro que passa pela conta da plataforma.
+      prisma.order.aggregate({ where: { status: "paid", sellerId: null }, _sum: { amount: true } }),
+      // Volume do marketplace: cai direto na Plumify de cada vendedor, NUNCA na
+      // conta da casa — mostrado só como informação, não é receita da plataforma.
+      prisma.order.aggregate({ where: { status: "paid", sellerId: { not: null } }, _sum: { amount: true } }),
+      prisma.product.count(),
+      prisma.user.count(),
+      prisma.order.count({ where: { status: "pending" } }),
+      prisma.download.count(),
+      prisma.product.count({ where: { status: "pending" } }),
+      prisma.user.count({ where: { plumifyConfigured: true } }),
+    ]);
 
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const recentVisits = await prisma.visit.count({ where: { createdAt: { gte: since } } });
@@ -54,10 +72,13 @@ router.get("/stats", async (req, res) => {
       totalOrders,
       paidOrders,
       pendingOrders,
-      revenue: revenueAgg._sum.amount || 0,
+      revenue: officialRevenueAgg._sum.amount || 0,
+      marketplaceVolume: marketplaceRevenueAgg._sum.amount || 0,
       totalProducts,
       totalUsers,
       totalDownloads,
+      pendingProducts,
+      totalSellers,
     });
   } catch (err) {
     console.error("Erro ao carregar estatísticas:", err);
@@ -97,14 +118,50 @@ router.get("/stats/revenue-daily", async (req, res) => {
 // GET /api/admin/products -> todos os produtos, inclusive os desativados
 router.get("/products", async (req, res) => {
   try {
+    const { status } = req.query;
     const products = await prisma.product.findMany({
+      where: status ? { status } : {},
       orderBy: { createdAt: "desc" },
-      include: { _count: { select: { orders: true } } },
+      include: {
+        _count: { select: { orders: true } },
+        seller: { select: { id: true, name: true, email: true, storeName: true } },
+      },
     });
     res.json({ products });
   } catch (err) {
     console.error("Erro ao listar produtos (admin):", err);
     res.status(500).json({ error: "Não foi possível carregar os produtos." });
+  }
+});
+
+// PUT /api/admin/products/:id/review -> aprovar ou rejeitar um produto de vendedor
+router.put("/products/:id/review", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { approve, reason } = req.body || {};
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) return res.status(404).json({ error: "Produto não encontrado." });
+    if (!product.sellerId) {
+      return res.status(400).json({ error: "Produtos oficiais não passam por revisão." });
+    }
+
+    const updated = await prisma.product.update({
+      where: { id },
+      data: {
+        status: approve ? "approved" : "rejected",
+        rejectionReason: approve ? null : String(reason || "").trim().slice(0, 300) || null,
+        reviewedAt: new Date(),
+      },
+    });
+    await logAction(req, approve ? "product.approve" : "product.reject", {
+      targetType: "Product",
+      targetId: id,
+      detail: approve ? undefined : { reason: updated.rejectionReason },
+    });
+    res.json({ product: updated });
+  } catch (err) {
+    console.error("Erro ao revisar produto:", err);
+    res.status(500).json({ error: "Não foi possível revisar este produto." });
   }
 });
 
@@ -139,7 +196,7 @@ router.get("/orders", async (req, res) => {
     };
     const orders = await prisma.order.findMany({
       where,
-      include: { product: true, user: true },
+      include: { product: true, user: true, seller: { select: { id: true, name: true, storeName: true } } },
       orderBy: { createdAt: "desc" },
       take: 200,
     });

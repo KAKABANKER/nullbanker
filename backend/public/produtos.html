@@ -15,6 +15,7 @@
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html" class="active">Produtos</a>
+      <a href="/minha-loja.html">Vender</a>
       <a href="/suporte.html">Suporte</a>
     </nav>
     <div class="topbar-actions" data-auth-slot></div>
@@ -27,6 +28,12 @@
     <div class="eyebrow-num">catálogo</div>
     <h2>Produtos</h2>
     <p class="lede" style="margin-bottom:40px;">Escolha o tipo de site ou sistema. Todos os preços incluem entrega no ar.</p>
+
+    <div class="tabs" id="scopeTabs" style="margin-bottom:28px;">
+      <button type="button" data-scope="" class="active">Todos</button>
+      <button type="button" data-scope="official">Oficiais NULLBANKER</button>
+      <button type="button" data-scope="marketplace">Da comunidade</button>
+    </div>
 
     <div class="search-row">
       <input type="text" id="searchInput" placeholder="Buscar por nome ou descrição..." />
@@ -41,6 +48,16 @@
 
 <footer>
   <div class="wrap">
+    <div class="footer-legal">
+      <span>[RAZÃO SOCIAL LTDA] · CNPJ [00.000.000/0000-00] · [Endereço completo, Cidade/UF] · <a href="mailto:[contato@seudominio.com]">[contato@seudominio.com]</a></span>
+      <span class="footer-legal-links">
+        <a href="/politica-privacidade.html">Privacidade</a>
+        <a href="/termos-de-uso.html">Termos de Uso</a>
+        <a href="/politica-cookies.html">Cookies</a>
+        <a href="/politica-reembolso.html">Reembolso</a>
+        <a href="#" data-manage-cookies>Gerenciar cookies</a>
+      </span>
+    </div>
     <div class="footer-bottom">
       <span>© 2026 NULLBANKER.</span>
       <span>desenvolvido por nuitbanker</span>
@@ -65,7 +82,7 @@
             ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" />` : `<img class="placeholder-art" src="/img/fedora.svg" alt="" />`}
           </div>
           <div class="product-card-body">
-            <span class="statement-index">Nº ${String(i + 1).padStart(2, "0")}</span>
+            <span class="statement-index">Nº ${String(i + 1).padStart(2, "0")} &nbsp; <span class="badge ${p.isOfficial ? "paid" : "pending"}">${p.isOfficial ? "Produto Oficial" : esc(p.sellerStoreName || "Vendedor da loja")}</span></span>
             <span class="statement-name">${esc(p.name)}</span>
             <div class="statement-desc">${esc(p.shortDesc)}</div>
             <div class="product-card-footer">
@@ -78,17 +95,29 @@
       .join("");
   }
 
+  let currentScope = "";
+
   async function loadProducts(q) {
     const list = document.getElementById("productList");
     list.innerHTML = `<div class="product-card"><div class="product-card-body"><span class="spinner-line">carregando produtos...</span></div></div>`;
     try {
-      const query = q ? `?q=${encodeURIComponent(q)}` : "";
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (currentScope) params.set("scope", currentScope);
+      const query = params.toString() ? `?${params.toString()}` : "";
       const data = await API.get(`/products${query}`);
       renderProducts(data.products);
     } catch (e) {
       list.innerHTML = `<div class="product-card"><div class="product-card-body">Não foi possível carregar os produtos agora.</div></div>`;
     }
   }
+
+  document.querySelectorAll("#scopeTabs button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#scopeTabs button").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    currentScope = b.dataset.scope;
+    loadProducts(document.getElementById("searchInput").value.trim());
+  }));
 
   document.getElementById("searchBtn").addEventListener("click", () => {
     loadProducts(document.getElementById("searchInput").value.trim());
