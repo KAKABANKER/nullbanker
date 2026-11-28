@@ -4,34 +4,35 @@
    Arte 100% original (SVG/CSS).
    ===================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Lato:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
 :root {
-  --ink: #0b0908;
-  --ink-2: #120e0c;
-  --ink-3: #1a1411;
-  --ink-4: #231a15;
-  --line: #2c211b;
-  --gold: #c9a45c;
-  --gold-l: #e8cf8f;
-  --gold-d: #8f7237;
-  --line-gold: color-mix(in srgb, var(--gold) 30%, transparent);
-  --wine: #7a1424;
-  --wine-d: #4a0c16;
-  --rose: #c4263c;
-  --cream: #efe4cc;
-  --cream-2: #cfc3a8;
-  --muted: #9a8f7d;
-  --ok: #8fbf7a;
+  /* Tema NULLBANKER MARKETPLACE — preto e branco, estilo marketplace moderno */
+  --ink: #ffffff;
+  --ink-2: #f7f7f7;
+  --ink-3: #f0f0f0;
+  --ink-4: #e8e8e8;
+  --line: #e4e4e4;
+  --gold: #111111;
+  --gold-l: #000000;
+  --gold-d: #3a3a3a;
+  --line-gold: #111111;
+  --wine: #111111;
+  --wine-d: #000000;
+  --rose: #d64560;
+  --cream: #111111;
+  --cream-2: #4a4a4a;
+  --muted: #8a8a8a;
+  --ok: #1a9c5c;
 
-  --display: "Cinzel", "Trajan Pro", Georgia, serif;
-  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
-  --sans: "Lato", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Poppins", "Inter", system-ui, sans-serif;
+  --serif: "Poppins", "Inter", system-ui, sans-serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  --max: 1140px;
-  --radius: 3px;
-  --gold-grad: linear-gradient(135deg, var(--gold-l) 0%, var(--gold) 48%, var(--gold-d) 100%);
+  --max: 1180px;
+  --radius: 10px;
+  --gold-grad: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
 }
 
 * { box-sizing: border-box; }
@@ -140,7 +141,7 @@ p { max-width: 64ch; margin: 0 0 1em; }
   color: var(--gold-l);
   white-space: nowrap;
 }
-.logo img { height: 44px; width: 44px; object-fit: contain; flex-shrink: 0; }
+.logo img { height: 40px; width: auto; max-width: 220px; object-fit: contain; flex-shrink: 0; border-radius: 0; }
 
 nav.mainnav { display: flex; gap: 34px; }
 nav.mainnav a {
@@ -228,8 +229,8 @@ section:last-of-type { border-bottom: none; }
 .hero {
   padding: 84px 0 76px;
   background:
-    linear-gradient(180deg, rgba(11, 9, 8, 0.55), rgba(11, 9, 8, 0.92)),
-    url("/img/hero.jpg") center / cover no-repeat,
+    linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.92)),
+    url("/img/hero-banner.jpg") center / cover no-repeat,
     radial-gradient(700px 420px at 78% 40%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 70%);
   border-bottom: 1px solid var(--line-gold);
   overflow: hidden;
@@ -472,7 +473,7 @@ footer { background: #070504; border-top: 1px solid var(--gold-d); box-shadow: 0
 .admin-shell { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
 .admin-side { background: #070504; border-right: 1px solid var(--line-gold); padding: 28px 22px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .admin-side .logo { margin-bottom: 32px; font-size: 15px; letter-spacing: 0.16em; }
-.admin-side .logo img { height: 38px; width: 38px; }
+.admin-side .logo img { height: 34px; width: auto; max-width: 180px; }
 .admin-side nav a {
   display: block; padding: 11px 12px; margin-bottom: 2px;
   font-family: var(--display); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
@@ -582,7 +583,7 @@ pre.json-view { font-family: var(--mono); font-size: 12px; background: #070504; 
   .hero { padding: 48px 0 52px; }
   .topbar .wrap { height: 66px; }
   .logo { font-size: 14px; letter-spacing: 0.14em; gap: 9px; }
-  .logo img { height: 36px; width: 36px; }
+  .logo img { height: 30px; width: auto; }
   .btn { padding: 14px 22px; }
   .hero-cta .btn { flex: 1 1 100%; }
   .hero-meta { gap: 8px 18px; }
@@ -617,10 +618,9 @@ pre.json-view { font-family: var(--mono); font-size: 12px; background: #070504; 
    v3 — logo, login obrigatório, downloads, toques e painel
    ===================================================================== */
 
-.logo-text { line-height: 1; }
-.logo img { border-radius: 6px; }
+.logo-text { display: none; }
 .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; font-family: var(--display); font-weight: 700; letter-spacing: 0.2em; color: var(--gold-l); }
-.footer-brand img { height: 46px; width: 46px; object-fit: contain; border-radius: 6px; }
+.footer-brand img { height: 40px; width: auto; object-fit: contain; border-radius: 0; }
 
 /* badge GRÁTIS */
 .badge-free {
