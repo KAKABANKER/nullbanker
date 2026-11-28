@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,21 +11,25 @@
 
 <header class="topbar">
   <div class="wrap">
-    <a href="/" class="logo"><img src="https://nullbankerstore.onrender.com/img/logo-horizontal.png" alt="NullBanker" data-fallback="/img/logo-horizontal.png" /><span class="logo-text">NULLBANKER</span></a>
+    <a href="/" class="logo"><img src="/img/logo-horizontal.png" alt="NullBanker" data-fallback="/img/logo-mark.png" /><span class="logo-text">NULLBANKER</span></a>
     <nav class="mainnav">
       <a href="/">Início</a>
       <a href="/produtos.html">Produtos</a>
       <a href="/minha-loja.html">Vender</a>
       <a href="/suporte.html">Suporte</a>
     </nav>
-    <div class="topbar-actions" data-auth-slot></div>
-    <button class="navtoggle">menu</button>
+    <div class="topbar-actions" data-auth-slot>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Alternar tema">Escuro</button>
+      <a href="/login.html">Entrar</a>
+      <a href="/registro.html" class="btn-ghost-white">Criar conta</a>
+    </div>
+    <button class="navtoggle" type="button" aria-label="Abrir menu">Menu</button>
   </div>
 </header>
 
 <section style="padding-top:80px;border-bottom:none;">
   <div class="wrap auth-wrap">
-    <img class="auth-modal-logo" src="/img/logo-horizontal.png" data-fallback="/img/logo-horizontal.png" alt="NullBanker" style="width:84px;height:84px;margin:0 auto 18px;" />
+    <img class="auth-modal-logo" src="/img/logo-horizontal.png" data-fallback="/img/logo-mark.png" alt="NullBanker" style="width:84px;height:84px;margin:0 auto 18px;" />
     <div class="eyebrow-num center-text">Acesso</div>
     <h2 class="center-text">Criar conta</h2>
     <div class="auth-box mt-40">
@@ -33,19 +37,19 @@
       <form id="regForm">
         <div class="field">
           <label for="name">Nome completo</label>
-          <input type="text" id="name" required />
+          <input type="text" id="name" required autocomplete="name" />
         </div>
         <div class="field">
           <label for="email">E-mail</label>
-          <input type="email" id="email" required />
+          <input type="email" id="email" required autocomplete="email" />
         </div>
         <div class="field">
           <label for="phone">Telefone (opcional)</label>
-          <input type="tel" id="phone" placeholder="(00) 00000-0000" />
+          <input type="tel" id="phone" placeholder="(00) 00000-0000" autocomplete="tel" />
         </div>
         <div class="field">
           <label for="password">Senha</label>
-          <input type="password" id="password" required minlength="6" />
+          <input type="password" id="password" required minlength="6" autocomplete="new-password" />
         </div>
         <p class="helper">Mínimo de 6 caracteres.</p>
         <label class="check-row" style="align-items:flex-start;">
@@ -62,11 +66,47 @@
 <script src="/js/api.js"></script>
 <script src="/js/main.js"></script>
 <script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.querySelector("[data-theme-toggle]");
+    var saved = localStorage.getItem("nb-theme");
+    if (saved === "dark" || saved === "light") {
+      root.setAttribute("data-theme", saved);
+    }
+    function label() {
+      btn.textContent = root.getAttribute("data-theme") === "dark" ? "Claro" : "Escuro";
+    }
+    label();
+    btn.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem("nb-theme", next);
+      label();
+    });
+  })();
+
+  function qs(name) {
+    try {
+      return new URLSearchParams(location.search).get(name);
+    } catch (e) { return null; }
+  }
+  function safeNext(value) {
+    if (!value) return "/";
+    try {
+      var u = new URL(value, location.origin);
+      if (u.origin !== location.origin) return "/";
+      return u.pathname + u.search + u.hash;
+    } catch (e) { return "/"; }
+  }
+
+  var nextParam = qs("next");
+  if (nextParam) document.getElementById("toLogin").href = "/login.html?next=" + encodeURIComponent(nextParam);
+
   document.getElementById("regForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const errorBox = document.getElementById("regError");
     errorBox.textContent = "";
-    errorBox.classList.remove("error");
+    errorBox.classList.remove("error", "success");
     if (!document.getElementById("consentTerms").checked) {
       errorBox.textContent = "É preciso aceitar os Termos de Uso e a Política de Privacidade para criar a conta.";
       errorBox.classList.add("error");
@@ -88,14 +128,12 @@
       API.setUser(data.user);
       window.location.href = safeNext(qs("next")) || "/";
     } catch (err) {
-      errorBox.textContent = err.message || "Não foi possível criar a conta.";
+      errorBox.textContent = (err && err.message) ? err.message : "Não foi possível criar a conta.";
       errorBox.classList.add("error");
       btn.disabled = false;
       btn.textContent = "Criar conta";
     }
   });
-  const nextParam = qs("next");
-  if (nextParam) document.getElementById("toLogin").href = "/login.html?next=" + encodeURIComponent(nextParam);
 </script>
 </body>
 </html>
